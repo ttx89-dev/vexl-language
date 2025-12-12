@@ -1,0 +1,63 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/vexl-core",
+    "crates/vexl-syntax",
+    "crates/vexl-types",
+    "crates/vexl-ir",
+    "crates/vexl-codegen",
+    "crates/vexl-runtime",
+    "crates/vexl-driver",
+    "crates/vexl-lsp",
+    "crates/vexl-pkg",
+    "tests/framework",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["VEXL Team"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/aequchain/vexl"
+
+[workspace.dependencies]
+# Core dependencies
+logos = "0.14"
+chumsky = "0.9"
+inkwell = { version = "0.5", features = ["llvm18-0"] }
+rayon = "1.10"
+crossbeam-deque = "0.8"
+
+# Runtime dependencies
+parking_lot = "0.12"
+dashmap = "6.0"
+
+# CLI/REPL dependencies
+rustyline = "14.0"
+clap = { version = "4.5", features = ["derive"] }
+
+# LSP dependencies
+tower-lsp = "0.20"
+tokio = { version = "1.41", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Testing dependencies
+proptest = "1.5"
+quickcheck = "1.0"
+
+# Utilities
+anyhow = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true

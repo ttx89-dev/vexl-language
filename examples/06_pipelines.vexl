@@ -1,0 +1,7 @@
+// VEXL Example: Working Pipelines
+// Demonstrates data flow with the |> operator
+
+// Simple pipeline with let bindings
+let data = 5
+let process = 10
+data |> process

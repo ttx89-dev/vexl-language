@@ -1,0 +1,11 @@
+[package]
+name = "vexl-types"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+vexl-core = { path = "../vexl-core" }
+vexl-syntax = { path = "../vexl-syntax" }
+dashmap.workspace = true

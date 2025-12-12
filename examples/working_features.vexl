@@ -1,0 +1,20 @@
+// VEXL Example: Working Features
+// All expressions below parse and type-check successfully!
+
+// ===== Arithmetic =====
+1 + 2 * 3
+
+// ===== Let Bindings =====
+let x = 5
+x + 10
+
+// ===== Vectors =====
+[1, 2, 3, 4, 5]
+
+// ===== Ranges =====
+[0..100]
+
+// ===== Combinations =====
+let nums = [1, 2, 3]
+let range = [0..10]
+nums

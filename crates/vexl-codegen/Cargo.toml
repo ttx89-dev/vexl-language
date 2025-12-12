@@ -1,0 +1,11 @@
+[package]
+name = "vexl-codegen"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+inkwell = { version = "0.4", features = ["llvm14-0"], default-features = false }
+vexl-ir = { path = "../vexl-ir" }
+vexl-core = { path = "../vexl-core" }

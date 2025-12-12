@@ -1,0 +1,16 @@
+// VEXL Example: Let Bindings
+// Demonstrates variable bindings
+
+// Simple binding
+let x = 5
+x
+
+// Multiple bindings
+let a = 10
+let b = 20
+a + b
+
+// Nested bindings
+let x = 5
+let y = x + 1
+y * 2

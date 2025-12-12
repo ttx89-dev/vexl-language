@@ -1,0 +1,10 @@
+[package]
+name = "vexl-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+parking_lot.workspace = true
+dashmap.workspace = true

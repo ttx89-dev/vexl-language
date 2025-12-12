@@ -1,0 +1,33 @@
+// VEXL Example: Data Analysis Pipeline
+// Demonstrates: pipelines, comprehensions, lazy evaluation
+
+// Load sales data (lazy generator - doesn't load all into memory)
+let sales_data = [
+  {region: "North", revenue: 1200, month: 1},
+  {region: "South", revenue: 800, month: 1},
+  {region: "North", revenue: 1500, month: 2},
+  {region: "South", revenue: 950, month: 2}
+]
+
+// Transform using pipeline (automatically parallelized!)
+let insights = sales_data
+  |> filter(|row| row.revenue > 1000)        // Pure → parallel
+  |> map(|row| {region: row.region, 
+                 revenue: row.revenue * 1.1})  // 10% markup
+  |> group_by(|row| row.region)
+  |> aggregate(sum)
+  |> sort_desc
+
+// Comprehension for complex filtering
+let high_performers = [
+  row | row <- sales_data, 
+        row.revenue > 1000,
+        row.region == "North"
+]
+
+// Statistical analysis  
+let revenues = [row.revenue | row <- sales_data]
+let mean_revenue = sum(revenues) / length(revenues)
+let variance = sum([((r - mean_revenue) ** 2) | r <- revenues]) / length(revenues)
+
+insights

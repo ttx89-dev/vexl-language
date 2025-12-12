@@ -1,0 +1,17 @@
+[package]
+name = "vexl-driver"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "vexl"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+vexl-syntax = { path = "../vexl-syntax" }
+vexl-types = { path = "../vexl-types" }
+vexl-ir = { path = "../vexl-ir" }
+vexl-codegen = { path = "../vexl-codegen" }

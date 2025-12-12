@@ -1,0 +1,58 @@
+// VEXL Example: Numerical Algorithms
+// Demonstrates: ranges, recursion with fix, lazy evaluation
+
+// Fibonacci sequence using fix (recursion)
+let fibonacci = fix fib => 
+  let base = [0, 1]
+  let next = |n| fib[n-1] + fib[n-2]
+  base ++ [next(n) | n <- [2..]]
+
+// Take first 20 Fibonacci numbers (lazy evaluation!)
+let fib_20 = take(fibonacci, 20)
+
+// Prime numbers using Sieve of Eratosthenes
+let primes = fix sieve =>
+  let candidates = [2..]  // Infinite range
+  let is_prime = |n| all([n % p != 0 | p <- sieve, p * p <= n])
+  [n | n <- candidates, is_prime(n)]
+
+// Monte Carlo π estimation (embarrassingly parallel!)
+let estimate_pi = |samples|
+  let random_points = [(random(), random()) | _ <- [0..samples]]
+  let inside_circle = [1 | (x, y) <- random_points, x*x + y*y <= 1]
+  4.0 * (length(inside_circle) / samples)
+
+// Numerical integration (Riemann sum)
+let integrate = |f, a, b, n|
+  let dx = (b - a) / n
+  let points = [a + i * dx | i <- [0..n]]
+  let areas = [f(x) * dx | x <- points]
+  sum(areas)
+
+// Example: integrate x^2 from 0 to 1
+let result = integrate(|x| x * x, 0, 1, 1000)  // ≈ 0.333
+
+// Newton's method for root finding
+let newton = |f, df, x0, tolerance|
+  fix iterate =>
+    let x_new = x0 - f(x0) / df(x0)
+    if abs(f(x_new)) < tolerance 
+      then x_new
+      else iterate(x_new)
+
+// Find √2 (root of x^2 - 2 = 0)
+let sqrt_2 = newton(|x| x*x - 2, |x| 2*x, 1.0, 0.0001)
+
+// Matrix power iteration (eigenvalue computation)
+let power_iteration = |matrix, iterations|
+  let random_vector = [random() | _ <- [0..rows(matrix)]]
+  fix iterate => |v, n|
+    if n >= iterations 
+      then v
+      else 
+        let v_new = matrix @ v
+        let normalized = v_new / norm(v_new)
+        iterate(normalized, n + 1)
+  iterate(random_vector, 0)
+
+fib_20

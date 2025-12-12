@@ -1,0 +1,65 @@
+// VEXL Example: Image Processing
+// Demonstrates: 2D arrays, convolution, comprehensions
+
+// Image represented as Height×Width×3 (RGB)
+let image = read_image("photo.png")  // Lazy loader
+
+// Gaussian blur kernel (5×5)
+let gaussian_kernel = 
+  [[1, 4, 6, 4, 1],
+   [4, 16, 24, 16, 4],
+   [6, 24, 36, 24, 6],
+   [4, 16, 24, 16, 4],
+   [1, 4, 6, 4, 1]] / 256.0
+
+// 2D Convolution (automatically parallelized!)
+let convolve = |img, kernel|
+  let h = height(img)
+  let w = width(img)
+  let k = size(kernel)
+  let pad = k / 2
+  
+  // For each pixel (parallel across all pixels!)
+  [[sum([img[i+di][j+dj] * kernel[di+pad][dj+pad] 
+         | di <- [-pad..pad], 
+           dj <- [-pad..pad]])
+    | j <- [0..w]]
+   | i <- [0..h]]
+
+// Apply blur
+let blurred = convolve(image, gaussian_kernel)
+
+// Sobel edge detection
+let sobel_x = [[-1, 0, 1],
+               [-2, 0, 2],
+               [-1, 0, 1]]
+
+let sobel_y = [[-1, -2, -1],
+               [0, 0, 0],
+               [1, 2, 1]]
+
+let edges = |img|
+  let gx = convolve(img, sobel_x)
+  let gy = convolve(img, sobel_y)
+  // Gradient magnitude
+  [[sqrt(gx[i][j]**2 + gy[i][j]**2) | j <- [0..width(img)]] 
+   | i <- [0..height(img)]]
+
+// Complete pipeline
+let processed = image
+  |> grayscale              // Convert to grayscale
+  |> convolve(gaussian_kernel)  // Blur
+  |> edges                  // Edge detection
+  |> threshold(128)         // Binary threshold
+  |> dilate                 // Morphological operation
+
+// Brightness adjustment (element-wise, parallel)
+let brighten = |img, factor|
+  [[pixel * factor | pixel <- row] | row <- img]
+
+// Histogram equalization
+let histogram = |img|
+  let pixels = flatten(img)
+  [count(pixels, |p| p == i) | i <- [0..255]]
+
+processed

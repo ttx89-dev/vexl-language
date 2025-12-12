@@ -1,0 +1,10 @@
+[package]
+name = "vexl-syntax"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+logos.workspace = true
+chumsky.workspace = true

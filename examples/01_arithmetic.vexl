@@ -1,0 +1,14 @@
+// VEXL Example: Basic Arithmetic
+// All these expressions parse and type-check correctly!
+
+// Simple arithmetic
+1 + 2
+
+// Operator precedence
+1 + 2 * 3
+
+// Parentheses  
+(1 + 2) * 3
+
+// More complex
+10 - 5 + 3 * 2

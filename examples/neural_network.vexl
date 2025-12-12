@@ -1,0 +1,86 @@
+// VEXL Example: Machine Learning - Simple Neural Network
+// Demonstrates: matrix operations, gradient descent, batching
+
+// Network architecture
+let input_size = 784    // 28×28 MNIST images
+let hidden_size = 128   
+let output_size = 10    // 10 digit classes
+
+// Initialize weights (random)
+let W1 = random_matrix(hidden_size, input_size) * 0.01
+let b1 = zeros(hidden_size, 1)
+let W2 = random_matrix(output_size, hidden_size) * 0.01
+let b2 = zeros(output_size, 1)
+
+// Activation functions
+let relu = |x| max(0, x)
+let softmax = |x| 
+  let exp_x = [exp(xi) | xi <- x]
+  let sum_exp = sum(exp_x)
+  [e / sum_exp | e <- exp_x]
+
+// Forward pass (type-safe matrix multiplication!)
+let forward = |x, W1, b1, W2, b2|
+  let z1 = W1 @ x + b1           // Hidden layer pre-activation
+  let a1 = [relu(z) | z <- z1]   // ReLU activation
+  let z2 = W2 @ a1 + b2          // Output layer
+  let probs = softmax(z2)        // Probabilities
+  {z1: z1, a1: a1, z2: z2, probs: probs}
+
+// Loss function (cross-entropy)
+let cross_entropy = |probs, label|
+  -log(probs[label])
+
+// Training on mini-batches (automatically parallelized!)
+let train_batch = |batch, W1, b1, W2, b2, lr|
+  // Forward pass for all samples in batch (parallel!)
+  let outputs = [forward(x, W1, b1, W2, b2) | x <- batch.inputs]
+  
+  // Compute loss
+  let losses = [cross_entropy(out.probs, y) 
+                | (out, y) <- zip(outputs, batch.labels)]
+  let avg_loss = sum(losses) / length(losses)
+  
+  // Backward pass (gradient computation)
+  // ... gradient calculations here ...
+  
+  // Update weights
+  let W1_new = W1 - lr * grad_W1
+  let b1_new = b1 - lr * grad_b1
+  let W2_new = W2 - lr * grad_W2
+  let b2_new = b2 - lr * grad_b2
+  
+  {W1: W1_new, b1: b1_new, W2: W2_new, b2: b2_new, loss: avg_loss}
+
+// Complete training loop
+let train = |data, epochs, batch_size, lr|
+  let batches = chunk(data, batch_size)
+  
+  fix iterate => |weights, epoch|
+    if epoch >= epochs 
+      then weights
+      else
+        // Train on all batches (can be parallelized!)
+        let updated = [train_batch(batch, weights.W1, weights.b1, 
+                                   weights.W2, weights.b2, lr) 
+                       | batch <- batches]
+        let final_weights = last(updated)
+        
+        // Log progress
+        let avg_loss = mean([u.loss | u <- updated])
+        print("Epoch " ++ epoch ++ ", Loss: " ++ avg_loss)
+        
+        iterate(final_weights, epoch + 1)
+  
+  iterate({W1: W1, b1: b1, W2: W2, b2: b2}, 0)
+
+// Inference (prediction)
+let predict = |x, weights|
+  let output = forward(x, weights.W1, weights.b1, 
+                       weights.W2, weights.b2)
+  argmax(output.probs)  // Return predicted class
+
+// Train the model
+let trained_model = train(mnist_data, epochs=10, batch_size=32, lr=0.01)
+
+trained_model

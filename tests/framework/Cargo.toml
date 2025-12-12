@@ -1,0 +1,13 @@
+[package]
+name = "vexl-test-framework"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+proptest.workspace = true
+quickcheck.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true

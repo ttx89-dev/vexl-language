@@ -1,0 +1,11 @@
+// VEXL Example: Lambdas
+// Demonstrates anonymous functions
+
+// Simple lambda (pipe syntax)
+|x| x + 1
+
+// Lambda with multiple params (arrow syntax)
+(x, y) => x * y
+
+// Lambda with more complex body
+|n| n * n + 1

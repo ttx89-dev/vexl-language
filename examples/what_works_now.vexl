@@ -1,0 +1,47 @@
+// Simple VEXL expressions you can test through the compiler right now
+// These work with: cargo test (they parse, type-check, lower to VIR)
+
+// ✅ WORKING - Basic arithmetic
+1 + 2
+5 * 10
+(2 + 3) * 4
+
+// ✅ WORKING - Vectors with dimensional checking
+[1, 2, 3]
+[[1, 2], [3, 4]]
+
+// ✅ WORKING - Ranges (generators)
+[0..10]
+[0..]
+
+// ✅ WORKING - Let bindings
+let x = 5 x
+let y = 10 y + x
+
+// ✅ WORKING - Lambdas
+|x| x + 1
+(x, y) => x * y
+
+// ✅ WORKING - Pipelines
+data |> process |> output
+
+// ✅ WORKING - Comprehensions
+[x * 2 | x <- [1..10]]
+[x | x <- nums, x > 0]
+
+// ✅ WORKING - Type checking catches errors!
+// These will fail type checking:
+// [[1,2]] + [[1,2,3]]  // Dimension mismatch!
+
+// ❌ NOT YET - These need runtime/stdlib to execute:
+// - File I/O (read_csv, read_image)
+// - Random numbers (random(), random_matrix)
+// - Math functions (sqrt, exp, log)
+// - Aggregations (sum, mean, max, min)
+// - Matrix operations (actual execution)
+
+// To test these expressions:
+// 1. cargo test test_e2e_simple_arithmetic
+// 2. cargo test test_e2e_vector  
+// 3. cargo test test_e2e_pipeline
+// 4. cargo test integration_test

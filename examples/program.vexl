@@ -1,0 +1,6 @@
+// Simple VEXL program that computes a value
+// This should compile to an executable that returns 42
+
+let x = 40
+let y = 2
+x + y

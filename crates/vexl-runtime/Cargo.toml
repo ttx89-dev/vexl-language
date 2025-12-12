@@ -1,0 +1,13 @@
+[package]
+name = "vexl-runtime"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+vexl-core = { path = "../vexl-core" }
+crossbeam-deque.workspace = true
+rayon.workspace = true
+parking_lot.workspace = true
+dashmap.workspace = true

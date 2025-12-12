@@ -1,0 +1,43 @@
+// VEXL Example: Linear Algebra & Matrix Operations
+// Demonstrates: dimensional type checking, matrix operations
+
+// 2D matrices with dimensional safety
+let matrix_a = [[1, 2, 3],
+                [4, 5, 6]]  // 2×3 matrix
+
+let matrix_b = [[7, 8],
+                [9, 10],
+                [11, 12]]   // 3×2 matrix
+
+// Matrix multiplication (type-checked!)
+let product = matrix_a @ matrix_b  // ✅ 2×3 @ 3×2 = 2×2
+
+// This would be a COMPILE ERROR:
+// let invalid = matrix_a @ matrix_a  // ❌ Cannot multiply 2×3 @ 2×3
+
+// Element-wise operations
+let scaled = matrix_a *. 2.5  // Scalar multiplication
+let summed = matrix_a + matrix_a  // Element-wise addition
+
+// Vector operations
+let v1 = [1, 2, 3]
+let v2 = [4, 5, 6]
+
+let dot_product = v1 *. v2  // Dot product: 1*4 + 2*5 + 3*6 = 32
+let outer_product = v1 ** v2  // Outer product: 3×3 matrix
+
+// Norms and distances
+let norm_v1 = sqrt(sum([x * x | x <- v1]))
+let distance = norm(v1 - v2)
+
+// Linear transformations (automatically parallelized)
+let transform_matrix = [[1, 0], [0, -1]]  // Reflection across x-axis
+let points = [[1, 2], [3, 4], [5, 6]]
+
+let transformed_points = [transform_matrix @ p | p <- points]
+// ↑ Pure function → runs in parallel across all CPU cores!
+
+// Eigenvalue computation (future)
+// let eigenvalues = eigen(matrix)
+
+product

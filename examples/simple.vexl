@@ -1,0 +1,13 @@
+// Simple VEXL program to test the CLI
+// File: examples/simple.vexl
+
+// Basic arithmetic
+1 + 2 * 3
+
+// Let bindings
+let x = 5
+let y = 10
+x + y
+
+// Vectors
+[1, 2, 3]

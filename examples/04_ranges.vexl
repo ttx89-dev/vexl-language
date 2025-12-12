@@ -1,0 +1,16 @@
+// VEXL Example: Ranges
+// Demonstrates lazy range generation
+
+// Finite range
+[0..10]
+
+// Another finite range
+[1..100]
+
+// Infinite range (lazy!)
+[0..]
+
+// Range with let binding
+let start = 0
+let end = 5
+[start..end]
