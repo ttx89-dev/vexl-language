@@ -164,7 +164,7 @@ VEXL is designed following the OPTIBEST framework. Contributions should:
 
 ## 📜 License
 
-MIT OR Apache-2.0
+MIT
 
 ## 🙏 Acknowledgments
 
