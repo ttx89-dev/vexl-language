@@ -6,7 +6,7 @@ VEXL starts with a simple premise: **Everything is a vector.**
 
 In most languages, you have integers, arrays, lists, and objects. In VEXL, a single number is just a 1-dimensional vector of size 1. A list is a vector. A matrix is a vector. Even a tree or a graph can be expressed as a nested vector structure.
 
-By treating everything as a vector, VEXL unifies mathematics and programming. Whether you are doing simple arithmetic, complex data processing, or high-performance neural networks, the syntax and logic remain exactly the same. It is designed to be **simple enough for a beginner** to write a script, yet **powerful enough for a scientist** to train a model.
+By treating everything as a vector, VEXL unifies mathematics and programming. Whether you are doing simple arithmetic, complex data processing, or high-performance neural networks, the syntax and logic remain exactly the same. It is designed to be **simple enough for a beginner** to write a script, yet **powerful enough for a scientist**.
 
 VEXL is a compiled, statically-typed language built for the future of high-performance computing, where parallel processing is the default, not an afterthought.
 
