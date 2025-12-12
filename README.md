@@ -1,6 +1,6 @@
 # VEXL
 
-[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![MIT License](https://img.shields.io/badge/OpenSource-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![AI Coded](https://img.shields.io/badge/AI%20Coded-100%25-brightgreen.svg?style=flat-square)](https://anthropic.com)
 [![Built with Claude 4.5 Opus](https://img.shields.io/badge/Agent-Claude%204.5%20Opus-ff9900.svg?style=flat-square&logo=anthropic&logoColor=white)](https://claude.ai)
 
