@@ -232,7 +232,7 @@ document solution | dimensional analysis | optimization journey | known limitati
 ████ 4 █ DOCUMENTED TRANSPARENTLY  █ |   journey recorded so achievement is traceable
 
 -------------------------------------------------
-██████████████████ PROVISIONS █ |
+██████████████████  PROVISIONS █ |
 ---
 
 █ gap detection must identify at least one non-trivial weakness before claiming none exist
@@ -241,7 +241,7 @@ document solution | dimensional analysis | optimization journey | known limitati
 █ verification failure > any method requires return > enhancement
 
 -------------------------------------------------
-████████ WHAT PREMIUM IS NOT █ |
+████████  WHAT PREMIUM IS NOT █ |
 ---
 
 ██              MISCONCEPTION █ REALITY 
