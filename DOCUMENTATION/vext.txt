@@ -26,7 +26,7 @@ BOT
 ---
 
 ██ 1 █       FUNCTIONAL █        work | completely? | achieves purpose in all cases
-██ 2 █        EFFICIENC █        is nothing wasted? |	minimal resource expenditure
+██ 2 █        EFFICIENC █        is nothing wasted? | minimal resource expenditure
 ██ 3 █       ROBUSTNESS █           does it endure? | reliable under all conditions
 ██ 4 █      SCALABILITY █            does it scale? | excellence across magnitudes
 ██ 5 █  MAINTAINABILITY █            can it evolve? | comprehensible | modifiable
