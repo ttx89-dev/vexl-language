@@ -1,15 +1,3 @@
-
-// VEXL                          
-███████████████████████████████
-██ ██ ██ ██████ ███ ██ ██    ██ 
-██ ██▄██ ██▄▄    ████  ██    ██ 
-██ ▀███▀ ██▄▄▄▄ ███ ██ █████ ██ 
-███████████████████████████████_________  
-#   ▄███▄ ██▀▀▀▀ ███ ██ █████
-#  ██ ██ ██▀▀    ████  ██
-# ██ ██ ██████ ███ ██ ██ 
--------------------------------
-
 ## EXAMPLES
 
 These examples are designed for beginners who want to see VEXL in action. Each example is complete and runnable, showing real-world applications of VEXL's vector-based approach.
