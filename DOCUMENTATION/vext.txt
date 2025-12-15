@@ -258,7 +258,7 @@ document solution | dimensional analysis | optimization journey | known limitati
 
 ██ TASK MAGNITUDE █ VERIFICATION REQUIREMENT |
 █████████████████████████████████████████████████
-██      **MACRO** █                 all 5 methods| maximum rigor 
+██      **MACRO** █                all 5 methods | maximum rigor 
 ██       **MESO** █  methods 1|2|4 [abbreviated] |
 ██      **MICRO** █       method 1 [abbreviated] | quick perspective check 
 
