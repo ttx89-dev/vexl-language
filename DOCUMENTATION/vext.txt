@@ -199,7 +199,7 @@ understand root cause | generate multiple solutions | select optimal enhancement
 ███████████████████████████████████ ██ █ PHASE 7
 ███████ ITERATINING █ |
 ---
-return > phase 3 > enhanced solution | repeat until enhancement delta approaches zero.
+return > phase 3 > enhanced solution | repeat until enhancement delta approaches zero
 
 -------------------------------------------------
 ███████████████████████████████████ ██ █ PHASE 8
