@@ -14,6 +14,7 @@ pub enum Expr {
     // Literals
     Int(i64, Span),
     Float(f64, Span),
+    Bool(bool, Span),
     String(String, Span),
     Ident(String, Span),
     
@@ -92,7 +93,7 @@ pub enum Expr {
 impl Expr {
     pub fn span(&self) -> Span {
         match self {
-            Expr::Int(_, s) | Expr::Float(_, s) | Expr::String(_, s) | Expr::Ident(_, s) => *s,
+            Expr::Int(_, s) | Expr::Float(_, s) | Expr::Bool(_, s) | Expr::String(_, s) | Expr::Ident(_, s) => *s,
             Expr::Vector(_, s) | Expr::Range(_, _, s) | Expr::InfiniteRange(_, s) => *s,
             Expr::Comprehension { span, .. } => *span,
             Expr::BinOp { span, .. } | Expr::UnOp { span, .. } => *span,

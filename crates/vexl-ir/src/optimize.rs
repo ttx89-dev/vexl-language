@@ -1,6 +1,6 @@
 //! VIR optimization passes
 
-use crate::{VirModule, VirFunction, BasicBlock, Instruction, InstructionKind, ValueId};
+use crate::{VirModule, VirFunction, Instruction, InstructionKind, ValueId};
 use std::collections::{HashMap, HashSet};
 
 /// Constant folding optimization
@@ -175,6 +175,11 @@ fn mark_instruction_uses(kind: &InstructionKind, used: &mut HashSet<ValueId>) {
             used.insert(*index);
             used.insert(*value);
         }
+        InstructionKind::RuntimeCall { args, .. } => {
+            for arg in args {
+                used.insert(*arg);
+            }
+        }
         InstructionKind::Call { func, args } => {
             used.insert(*func);
             for arg in args {
@@ -207,6 +212,7 @@ fn mark_instruction_uses(kind: &InstructionKind, used: &mut HashSet<ValueId>) {
 fn has_side_effects(kind: &InstructionKind) -> bool {
     matches!(kind,
         InstructionKind::Call { .. } |
+        InstructionKind::RuntimeCall { .. } |
         InstructionKind::VectorSet { .. }
     )
 }
@@ -223,7 +229,7 @@ pub fn optimize(module: &mut VirModule) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Terminator, BlockId};
+    use crate::{Terminator, BlockId, BasicBlock};
 
     #[test]
     fn test_constant_fold_add() {

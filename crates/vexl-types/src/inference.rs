@@ -54,11 +54,59 @@ pub struct TypeEnv {
 
 impl TypeEnv {
     pub fn new() -> Self {
-        Self {
+        let mut env = Self {
             bindings: HashMap::new(),
             next_type_var: 0,
             next_dim_var: 0,
-        }
+        };
+
+        // Add built-in functions
+        env.add_builtin_functions();
+        env
+    }
+
+    fn add_builtin_functions(&mut self) {
+        // sum: Vector<Int, 1> -> Int
+        let vector_int = InferredType::Vector {
+            element: Box::new(InferredType::Int),
+            dimension: DimVar::Concrete(1),
+        };
+
+        self.bindings.insert(
+            "sum".to_string(),
+            InferredType::Function {
+                params: vec![vector_int],
+                ret: Box::new(InferredType::Int),
+                effect: Effect::Pure,
+            },
+        );
+
+        // print: Int -> Unit (effect: io)
+        // For simplicity, we'll model Unit as Int for now
+        self.bindings.insert(
+            "print".to_string(),
+            InferredType::Function {
+                params: vec![InferredType::Int],
+                ret: Box::new(InferredType::Int), // Unit
+                effect: Effect::Io,
+            },
+        );
+
+        // get: (Vector<Int, 1>, Int) -> Int
+        self.bindings.insert(
+            "get".to_string(),
+            InferredType::Function {
+                params: vec![
+                    InferredType::Vector {
+                        element: Box::new(InferredType::Int),
+                        dimension: DimVar::Concrete(1),
+                    },
+                    InferredType::Int
+                ],
+                ret: Box::new(InferredType::Int),
+                effect: Effect::Pure,
+            },
+        );
     }
     
     pub fn insert(&mut self, name: String, ty: InferredType) {
@@ -247,23 +295,67 @@ pub fn infer(expr: &Expr, env: &mut TypeEnv) -> Result<(InferredType, Vec<Constr
         }
         
         
+        Expr::App { func, args, .. } => {
+            // Function application
+            let (func_ty, mut constraints) = infer(func, env)?;
+
+            // Function must have function type
+            let (param_types, return_type) = match &func_ty {
+                InferredType::Function { params, ret, .. } => (params.clone(), (**ret).clone()),
+                _ => {
+                    // Not a function type, create a function type that matches arg count
+                    let ret_var = env.fresh_type_var();
+                    let param_vars: Vec<InferredType> = (0..args.len())
+                        .map(|_| InferredType::Var(env.fresh_type_var()))
+                        .collect();
+
+                    // Add constraint that func_ty must be a function
+                    let func_type = InferredType::Function {
+                        params: param_vars.clone(),
+                        ret: Box::new(InferredType::Var(ret_var.clone())),
+                        effect: Effect::Pure, // Assume pure for now
+                    };
+                    constraints.push(Constraint::Equal(func_ty.clone(), func_type));
+
+                    (param_vars, InferredType::Var(ret_var))
+                }
+            };
+
+            // Check argument types match parameter types
+            if args.len() != param_types.len() {
+                return Err(format!(
+                    "Function expects {} arguments, got {}",
+                    param_types.len(),
+                    args.len()
+                ));
+            }
+
+            for (arg, param_ty) in args.iter().zip(param_types.iter()) {
+                let (arg_ty, arg_constraints) = infer(arg, env)?;
+                constraints.extend(arg_constraints);
+                constraints.push(Constraint::Equal(arg_ty, param_ty.clone()));
+            }
+
+            Ok((return_type, constraints))
+        }
+
         Expr::Pipeline { stages, .. } => {
             // Pipeline: data |> f |> g
             // Type flows left to right: output of each stage is input to next
             if stages.is_empty() {
                 return Err("Empty pipeline".to_string());
             }
-            
+
             // Infer type of first stage (the data)
             let (mut current_ty, mut constraints) = infer(&stages[0], env)?;
-            
+
             // For each subsequent stage, it should be a function that takes current type
             // For now, we just thread the type through (simplified pipeline typing)
             // In full implementation, we'd check function types match
             for stage in &stages[1..] {
                 let (stage_ty, stage_constraints) = infer(stage, env)?;
                 constraints.extend(stage_constraints);
-                
+
                 // Simplified: assume stage transforms current_ty
                 // In practice, you'd unify stage_ty with Function(current_ty -> result)
                 // For now, just use stage identifier's type from env if available
@@ -286,10 +378,10 @@ pub fn infer(expr: &Expr, env: &mut TypeEnv) -> Result<(InferredType, Vec<Constr
                     }
                 }
             }
-            
+
             Ok((current_ty, constraints))
         }
-        
+
         _ => Err(format!("Type inference not yet implemented for {:?}", expr)),
     }
 }

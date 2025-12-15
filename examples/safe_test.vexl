@@ -1,0 +1,6 @@
+// Safe VEXL Test
+// Calculating vector sums
+let v1 = [1, 2, 3, 4, 5]
+let v2 = [10, 10, 10, 10, 10]
+let sum = v1 + v2
+sum

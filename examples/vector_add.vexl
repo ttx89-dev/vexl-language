@@ -1,0 +1,5 @@
+let a = [10, 20]
+let b = [1, 2]
+let c = a + b
+let d = [print(get(c, 0)), print(get(c, 1))]
+0

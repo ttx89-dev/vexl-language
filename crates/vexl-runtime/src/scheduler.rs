@@ -4,6 +4,8 @@
 //! help busy threads by taking tasks from their queues. This ensures optimal CPU
 //! utilization and fair work distribution across all available cores.
 
+#![allow(static_mut_refs)]
+
 use crossbeam_deque::{Injector, Stealer, Worker};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -112,6 +114,34 @@ fn cooperative_worker_loop(
             // No work available, yield to avoid busy-waiting
             thread::yield_now();
         }
+    }
+}
+
+/// Global scheduler instance
+static mut GLOBAL_SCHEDULER: Option<CooperativeScheduler> = None;
+
+/// Initialize the global thread pool
+pub fn init_thread_pool() {
+    unsafe {
+        if GLOBAL_SCHEDULER.is_none() {
+            GLOBAL_SCHEDULER = Some(CooperativeScheduler::default());
+        }
+    }
+}
+
+/// Shutdown the global thread pool
+pub fn shutdown_thread_pool() {
+    unsafe {
+        if let Some(scheduler) = GLOBAL_SCHEDULER.take() {
+            scheduler.shutdown();
+        }
+    }
+}
+
+/// Get reference to global scheduler
+pub fn global_scheduler() -> &'static CooperativeScheduler {
+    unsafe {
+        GLOBAL_SCHEDULER.as_ref().expect("Thread pool not initialized")
     }
 }
 

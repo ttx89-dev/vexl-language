@@ -1,0 +1,203 @@
+//! VEXL Standard Library - Vector Operations
+//! Defines common vector operations like map, filter, reduce, etc.
+
+/// Length of a vector
+pure fn len<T, D>(v: Vector<T, D>) -> Int = {
+    __intrinsic_vec_len(v)
+}
+
+/// Map a function over all elements
+pure fn map<T, U, D>(f: T -> U, v: Vector<T, D>) -> Vector<U, D> = {
+    __intrinsic_vec_map(f, v)
+}
+
+/// Filter elements using a predicate
+pure fn filter<T, D>(pred: T -> Bool, v: Vector<T, D>) -> Vector<T, D> = {
+    __intrinsic_vec_filter(pred, v)
+}
+
+/// Reduce vector to single value using binary operation
+pure fn reduce<T>(f: (T, T) -> T, init: T, v: Vector<T, 1>) -> T = {
+    __intrinsic_vec_reduce(f, init, v)
+}
+
+/// Concatenate two vectors
+pure fn concat<T>(v1: Vector<T, 1>, v2: Vector<T, 1>) -> Vector<T, 1> = {
+    __intrinsic_vec_concat(v1, v2)
+}
+
+/// Get first element
+pure fn head<T>(v: Vector<T, 1>) -> T = {
+    v[0]
+}
+
+/// Get all but first element
+pure fn tail<T>(v: Vector<T, 1>) -> Vector<T, 1> = {
+    v[1..]
+}
+
+/// Get last element
+pure fn last<T>(v: Vector<T, 1>) -> T = {
+    v[len(v) - 1]
+}
+
+/// Get all but last element
+pure fn init<T>(v: Vector<T, 1>) -> Vector<T, 1> = {
+    v[0..len(v)-1]
+}
+
+/// Take first n elements
+pure fn take<T>(n: Int, v: Vector<T, 1>) -> Vector<T, 1> = {
+    if n >= len(v) {
+        v
+    } else if n <= 0 {
+        []
+    } else {
+        v[0..n]
+    }
+}
+
+/// Drop first n elements
+pure fn drop<T>(n: Int, v: Vector<T, 1>) -> Vector<T, 1> = {
+    if n >= len(v) {
+        []
+    } else if n <= 0 {
+        v
+    } else {
+        v[n..]
+    }
+}
+
+/// Reverse vector
+pure fn reverse<T>(v: Vector<T, 1>) -> Vector<T, 1> = {
+    let n = len(v)
+    [v[n - 1 - i] | i <- [0..n]]
+}
+
+/// Check if vector is empty
+pure fn is_empty<T, D>(v: Vector<T, D>) -> Bool = {
+    len(v) == 0
+}
+
+/// Check if element exists in vector
+pure fn contains<T>(v: Vector<T, 1>, x: T) -> Bool = {
+    reduce((acc, elem) => acc || (elem == x), false, v)
+}
+
+/// Find first element matching predicate
+pure fn find<T>(pred: T -> Bool, v: Vector<T, 1>) -> T = {
+    let filtered = filter(pred, v)
+    if is_empty(filtered) {
+        // Error: no element found
+        0  // TODO: proper error handling
+    } else {
+        head(filtered)
+    }
+}
+
+/// Check if all elements satisfy predicate
+pure fn all<T>(pred: T -> Bool, v: Vector<T, 1>) -> Bool = {
+    reduce((acc, elem) => acc && pred(elem), true, v)
+}
+
+/// Check if any element satisfies predicate
+pure fn any<T>(pred: T -> Bool, v: Vector<T, 1>) -> Bool = {
+    reduce((acc, elem) => acc || pred(elem), false, v)
+}
+
+/// Count elements satisfying predicate
+pure fn count<T>(pred: T -> Bool, v: Vector<T, 1>) -> Int = {
+    len(filter(pred, v))
+}
+
+/// Sort vector in ascending order
+pure fn sort<T>(v: Vector<T, 1>) -> Vector<T, 1> = {
+    __intrinsic_vec_sort(v)  // TODO: implement sorting
+}
+
+/// Sort vector by key function
+pure fn sort_by<T, K>(key_fn: T -> K, v: Vector<T, 1>) -> Vector<T, 1> = {
+    __intrinsic_vec_sort_by(key_fn, v)  // TODO: implement sorting
+}
+
+/// Partition vector into two based on predicate
+pure fn partition<T>(pred: T -> Bool, v: Vector<T, 1>) -> (Vector<T, 1>, Vector<T, 1>) = {
+    let matching = filter(pred, v)
+    let non_matching = filter(x => !pred(x), v)
+    (matching, non_matching)
+}
+
+/// Zip two vectors into pairs
+pure fn zip<T, U>(v1: Vector<T, 1>, v2: Vector<U, 1>) -> Vector<(T, U), 1> = {
+    let min_len = if len(v1) < len(v2) { len(v1) } else { len(v2) }
+    [(v1[i], v2[i]) | i <- [0..min_len]]
+}
+
+/// Unzip vector of pairs
+pure fn unzip<T, U>(v: Vector<(T, U), 1>) -> (Vector<T, 1>, Vector<U, 1>) = {
+    let firsts = map((pair) => pair.0, v)
+    let seconds = map((pair) => pair.1, v)
+    (firsts, seconds)
+}
+
+/// Intersperse element between vector elements
+pure fn intersperse<T>(sep: T, v: Vector<T, 1>) -> Vector<T, 1> = {
+    if is_empty(v) {
+        []
+    } else if len(v) == 1 {
+        v
+    } else {
+        let first = head(v)
+        let rest = tail(v)
+        [first, sep] ++ intersperse(sep, rest)
+    }
+}
+
+/// Group consecutive equal elements
+pure fn group<T>(v: Vector<T, 1>) -> Vector<Vector<T, 1>, 1> = {
+    __intrinsic_vec_group(v)  // TODO: implement grouping
+}
+
+/// Remove consecutive duplicates
+pure fn nub<T>(v: Vector<T, 1>) -> Vector<T, 1> = {
+    map(head, group(v))
+}
+
+/// Sum of numeric vector
+pure fn sum(v: Vector<Int, 1>) -> Int = {
+    reduce((a, b) => a + b, 0, v)
+}
+
+/// Product of numeric vector
+pure fn product(v: Vector<Int, 1>) -> Int = {
+    reduce((a, b) => a * b, 1, v)
+}
+
+/// Maximum element
+pure fn max(v: Vector<Int, 1>) -> Int = {
+    reduce((a, b) => if a > b { a } else { b }, head(v), tail(v))
+}
+
+/// Minimum element
+pure fn min(v: Vector<Int, 1>) -> Int = {
+    reduce((a, b) => if a < b { a } else { b }, head(v), tail(v))
+}
+
+/// Mean (average) of numeric vector
+pure fn mean(v: Vector<Int, 1>) -> Float = {
+    let total = sum(v)
+    let count = len(v)
+    total as Float / count as Float
+}
+
+/// Variance of numeric vector
+pure fn variance(v: Vector<Int, 1>) -> Float = {
+    let m = mean(v)
+    let squared_diffs = map(x => (x as Float - m) * (x as Float - m), v)
+    mean(squared_diffs)
+}
+
+/// Standard deviation of numeric vector
+pure fn std_dev(v: Vector<Int, 1>) -> Float = {
+    sqrt(variance(v))
+}

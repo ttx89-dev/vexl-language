@@ -36,7 +36,7 @@ impl Default for EffectEnv {
 pub fn infer_effect(expr: &Expr, env: &EffectEnv) -> Effect {
     match expr {
         // Literals are always pure
-        Expr::Int(_, _) | Expr::Float(_, _) | Expr::String(_, _) => Effect::Pure,
+        Expr::Int(_, _) | Expr::Float(_, _) | Expr::String(_, _) | Expr::Bool(_, _) => Effect::Pure,
         
         // Variable lookup: depends on variable's effect
         Expr::Ident(name, _) => {

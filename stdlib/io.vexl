@@ -1,0 +1,431 @@
+//! VEXL Standard Library - Input/Output Functions
+//! Defines functions for printing, reading, and basic I/O operations.
+
+// ═══════════════════════════════════════════════════════════
+// PRINTING FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+/// Print integer value
+io fn print_int(x: Int) -> () = {
+    __intrinsic_print_int(x)
+}
+
+/// Print float value
+io fn print_float(x: Float) -> () = {
+    __intrinsic_print_float(x)
+}
+
+/// Print string value
+io fn print_string(s: String) -> () = {
+    __intrinsic_print_string(s)
+}
+
+/// Print boolean value
+io fn print_bool(b: Bool) -> () = {
+    if b {
+        print_string("true")
+    } else {
+        print_string("false")
+    }
+}
+
+/// Print newline
+io fn print_newline() -> () = {
+    __intrinsic_print_newline()
+}
+
+/// Generic print function (dispatches by type)
+io fn print<T>(x: T) -> () = {
+    match x {
+        Int i => print_int(i)
+        Float f => print_float(f)
+        String s => print_string(s)
+        Bool b => print_bool(b)
+        Vector v => print_vector(v)
+        _ => print_string("<unknown>")  // TODO: Better type handling
+    }
+    print_newline()
+}
+
+/// Print with newline
+io fn println<T>(x: T) -> () = {
+    print(x)
+}
+
+/// Print without newline
+io fn print_no_nl<T>(x: T) -> () = {
+    match x {
+        Int i => print_int(i)
+        Float f => print_float(f)
+        String s => print_string(s)
+        Bool b => print_bool(b)
+        Vector v => print_vector_no_nl(v)
+        _ => print_string("<unknown>")
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// VECTOR PRINTING
+// ═══════════════════════════════════════════════════════════
+
+/// Print vector with formatting
+io fn print_vector<T, D>(v: Vector<T, D>) -> () = {
+    print_vector_no_nl(v)
+    print_newline()
+}
+
+/// Print vector without trailing newline
+io fn print_vector_no_nl<T, D>(v: Vector<T, D>) -> () = {
+    print_string("[")
+    let n = len(v)
+
+    if n > 0 {
+        print_no_nl(v[0])
+
+        let i = 1
+        while i < n {
+            print_string(", ")
+            print_no_nl(v[i])
+            i = i + 1
+        }
+    }
+
+    print_string("]")
+}
+
+/// Print vector as row (for matrices)
+io fn print_vector_row<T>(v: Vector<T, 1>) -> () = {
+    print_vector_no_nl(v)
+    print_newline()
+}
+
+/// Print vector as column
+io fn print_vector_col<T>(v: Vector<T, 1>) -> () = {
+    let n = len(v)
+    let i = 0
+    while i < n {
+        print(v[i])
+        i = i + 1
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MATRIX PRINTING
+// ═══════════════════════════════════════════════════════════
+
+/// Print 2D vector as matrix
+io fn print_matrix<T>(m: Vector<Vector<T, 1>, 1>) -> () = {
+    let rows = len(m)
+    let i = 0
+    while i < rows {
+        print_vector_row(m[i])
+        i = i + 1
+    }
+}
+
+/// Print matrix with borders
+io fn print_matrix_boxed<T>(m: Vector<Vector<T, 1>, 1>) -> () = {
+    let rows = len(m)
+    if rows == 0 {
+        print_string("[]")
+        print_newline()
+        return ()
+    }
+
+    let cols = len(m[0])
+
+    // Top border
+    print_string("┌")
+    let j = 0
+    while j < cols {
+        print_string("───")
+        if j < cols - 1 {
+            print_string("─")
+        }
+        j = j + 1
+    }
+    print_string("┐")
+    print_newline()
+
+    // Matrix content
+    let i = 0
+    while i < rows {
+        print_string("│")
+        let j = 0
+        while j < cols {
+            let val = m[i][j]
+            // Format with padding
+            match val {
+                Int x => {
+                    if x < 10 {
+                        print_string(" ")
+                    }
+                    print_int(x)
+                    print_string(" ")
+                }
+                _ => print(val)
+            }
+
+            if j < cols - 1 {
+                print_string(" ")
+            }
+            j = j + 1
+        }
+        print_string("│")
+        print_newline()
+
+        // Row separator (except for last row)
+        if i < rows - 1 {
+            print_string("├")
+            let j = 0
+            while j < cols {
+                print_string("───")
+                if j < cols - 1 {
+                    print_string("─")
+                }
+                j = j + 1
+            }
+            print_string("┤")
+            print_newline()
+        }
+
+        i = i + 1
+    }
+
+    // Bottom border
+    print_string("└")
+    let j = 0
+    while j < cols {
+        print_string("───")
+        if j < cols - 1 {
+            print_string("─")
+        }
+        j = j + 1
+    }
+    print_string("┘")
+    print_newline()
+}
+
+// ═══════════════════════════════════════════════════════════
+// FORMATTING FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+/// Format integer with minimum width
+io fn format_int_width(x: Int, width: Int) -> String = {
+    // Simple implementation - pad with spaces
+    let s = format_int(x)
+    let len = string_len(s)
+    if len >= width {
+        s
+    } else {
+        let padding = width - len
+        let spaces = repeat_string(" ", padding)
+        concat_strings(spaces, s)
+    }
+}
+
+/// Format float with decimal places
+io fn format_float_decimals(x: Float, decimals: Int) -> String = {
+    // Simplified - just convert and truncate
+    let whole = x as Int
+    let fractional = (x - whole as Float) * powf(10.0, decimals as Float)
+    let frac_int = round(fractional) as Int
+
+    let whole_str = format_int(whole)
+    let frac_str = format_int_width(frac_int, decimals)
+
+    concat_strings(concat_strings(whole_str, "."), frac_str)
+}
+
+/// Format scientific notation
+io fn format_scientific(x: Float) -> String = {
+    // Simplified scientific notation
+    if x == 0.0 {
+        "0.0e+0"
+    } else {
+        let log10_val = ln(abs(x)) / ln(10.0)
+        let exponent = floor(log10_val) as Int
+        let mantissa = x / powf(10.0, exponent as Float)
+
+        let mant_str = format_float_decimals(mantissa, 3)
+        let exp_str = format_int(exponent)
+
+        concat_strings(concat_strings(mant_str, "e"), exp_str)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRING UTILITIES
+// ═══════════════════════════════════════════════════════════
+
+/// Convert integer to string
+pure fn format_int(x: Int) -> String = {
+    if x == 0 {
+        "0"
+    } else if x < 0 {
+        concat_strings("-", format_int(-x))
+    } else {
+        // Simple digit extraction
+        let digits = []
+        let n = x
+        while n > 0 {
+            let digit = n % 10
+            digits = [digit + 48] ++ digits  // ASCII '0' = 48
+            n = n / 10
+        }
+        // Convert byte array to string
+        __intrinsic_bytes_to_string(digits)
+    }
+}
+
+/// Convert float to string
+pure fn format_float(x: Float) -> String = {
+    format_float_decimals(x, 6)  // Default 6 decimal places
+}
+
+/// String length
+pure fn string_len(s: String) -> Int = {
+    __intrinsic_string_len(s)
+}
+
+/// Concatenate strings
+pure fn concat_strings(s1: String, s2: String) -> String = {
+    __intrinsic_string_concat(s1, s2)
+}
+
+/// Repeat string n times
+pure fn repeat_string(s: String, n: Int) -> String = {
+    if n <= 0 {
+        ""
+    } else if n == 1 {
+        s
+    } else {
+        concat_strings(s, repeat_string(s, n - 1))
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INPUT FUNCTIONS (Future)
+// ═══════════════════════════════════════════════════════════
+
+/// Read line from stdin (placeholder)
+// io fn read_line() -> String = {
+//     __intrinsic_read_line()
+// }
+
+/// Read integer from stdin (placeholder)
+// io fn read_int() -> Int = {
+//     let line = read_line()
+//     // TODO: Parse integer
+//     0
+// }
+
+/// Read float from stdin (placeholder)
+// io fn read_float() -> Float = {
+//     let line = read_line()
+//     // TODO: Parse float
+//     0.0
+// }
+
+// ═══════════════════════════════════════════════════════════
+// FILE I/O (Future)
+// ═══════════════════════════════════════════════════════════
+
+/// Read entire file (placeholder)
+// io fn read_file(path: String) -> String = {
+//     __intrinsic_read_file(path)
+// }
+
+/// Write string to file (placeholder)
+// io fn write_file(path: String, content: String) -> () = {
+//     __intrinsic_write_file(path, content)
+// }
+
+/// Append to file (placeholder)
+// io fn append_file(path: String, content: String) -> () = {
+//     __intrinsic_append_file(path, content)
+// }
+
+// ═══════════════════════════════════════════════════════════
+// DEBUGGING UTILITIES
+// ═══════════════════════════════════════════════════════════
+
+/// Debug print with label
+io fn debug<T>(label: String, value: T) -> () = {
+    print_string("[DEBUG] ")
+    print_string(label)
+    print_string(": ")
+    print(value)
+}
+
+/// Debug print vector with label
+io fn debug_vec<T, D>(label: String, v: Vector<T, D>) -> () = {
+    print_string("[DEBUG] ")
+    print_string(label)
+    print_string(": ")
+    print_vector(v)
+}
+
+/// Time function execution
+io fn time<T>(label: String, f: () -> T) -> T = {
+    // TODO: Implement timing
+    print_string("[TIME] Starting: ")
+    println(label)
+
+    let result = f()
+
+    print_string("[TIME] Finished: ")
+    println(label)
+
+    result
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRETTY PRINTING
+// ═══════════════════════════════════════════════════════════
+
+/// Pretty print any value
+io fn pretty_print<T>(x: T) -> () = {
+    match x {
+        Vector v => pretty_print_vector(v, 0)
+        _ => print(x)
+    }
+}
+
+/// Pretty print vector with indentation
+io fn pretty_print_vector<T, D>(v: Vector<T, D>, indent: Int) -> () = {
+    let indent_str = repeat_string("  ", indent)
+
+    if len(v) == 0 {
+        print_string(indent_str)
+        print_string("[]")
+        print_newline()
+    } else {
+        print_string(indent_str)
+        print_string("[")
+        print_newline()
+
+        let n = len(v)
+        let i = 0
+        while i < n {
+            // Recursively print nested vectors
+            match v[i] {
+                Vector nested => pretty_print_vector(nested, indent + 1)
+                other => {
+                    print_string(repeat_string("  ", indent + 1))
+                    print(other)
+                }
+            }
+
+            if i < n - 1 {
+                print_string(",")
+            }
+            print_newline()
+            i = i + 1
+        }
+
+        print_string(indent_str)
+        print_string("]")
+        print_newline()
+    }
+}

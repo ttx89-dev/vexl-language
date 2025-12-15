@@ -1,0 +1,37 @@
+// VEXL Standard Library - Math Module
+// Only expressions work in current parser - no function definitions yet
+
+// Basic arithmetic expressions
+let add = (a, b) => a + b
+let subtract = (a, b) => a - b
+let multiply = (a, b) => a * b
+let divide = (a, b) => a / b
+
+// Comparison expressions with if
+let min_ab = if 5 < 10 then 5 else 10
+let max_ab = if 15 > 8 then 15 else 8
+
+// Example if expression (what you wanted)
+let ryan_greeting = if true then "hi" else ""
+let min_result = if 5 < 10 then 5 else 10
+
+// Mathematical constants
+let PI = 3.141592653589793
+let E = 2.718281828459045
+
+// Vector operations (expressions only)
+let numbers = [1, 2, 3, 4, 5]
+let doubled = numbers |> map(x => x * 2)
+let sum_result = sum(doubled)
+
+// Trigonometric expressions
+let sin_value = math_sin(1.57)  // ≈ π/2
+let cos_value = math_cos(0.0)   // = 1
+pure fn sin(x: Float) -> Float = math_sin(x)
+pure fn cos(x: Float) -> Float = math_cos(x)
+pure fn sqrt(x: Float) -> Float = math_sqrt(x)
+
+// Vector operations
+pure fn sum(vec: Vector<Int, 1>) -> Int = vec_sum(vec)
+pure fn product(vec: Vector<Int, 1>) -> Int = vec_product(vec)
+pure fn mean(vec: Vector<Int, 1>) -> Float = sum(vec) / len(vec)

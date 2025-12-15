@@ -35,7 +35,13 @@ pub enum Token {
     
     #[regex(r#""([^"\\]|\\.)*""#, |lex| lex.slice()[1..lex.slice().len()-1].to_string())]
     String(String),
-    
+
+    #[token("true")]
+    True,
+
+    #[token("false")]
+    False,
+
     #[regex(r"[a-zA-Z_][a-zA-Z0-9_]*", |lex| lex.slice().to_string())]
     Ident(String),
 

@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/vexl-stdlib",
+    "crates/vexl-gpu",
     "crates/vexl-core",
     "crates/vexl-syntax",
     "crates/vexl-types",
@@ -45,6 +47,11 @@ serde_json = "1.0"
 # Testing dependencies
 proptest = "1.5"
 quickcheck = "1.0"
+
+# GPU dependencies
+cudarc = { version = "0.12" }
+opencl3 = { version = "0.9" }
+ash = { version = "0.38" }
 
 # Utilities
 anyhow = "1.0"

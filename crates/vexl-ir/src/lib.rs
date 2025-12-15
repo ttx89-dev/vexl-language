@@ -89,6 +89,12 @@ pub enum InstructionKind {
         func: ValueId,
         args: Vec<ValueId>,
     },
+
+    // Runtime function call (FFI to runtime library)
+    RuntimeCall {
+        function_name: String,
+        args: Vec<ValueId>,
+    },
     
     // Generator operations
     GeneratorNew {

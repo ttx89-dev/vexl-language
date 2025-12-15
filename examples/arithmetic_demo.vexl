@@ -1,0 +1,85 @@
+
+// VEXL                          
+███████████████████████████████
+██ ██ ██ ██████ ███ ██ ██    ██ 
+██ ██▄██ ██▄▄    ████  ██    ██ 
+██ ▀███▀ ██▄▄▄▄ ███ ██ █████ ██ 
+███████████████████████████████_________  
+#   ▄███▄ ██▀▀▀▀ ███ ██ █▀▀▀
+#  ▀▀ ▀▀ ▀▀▀▀     ▀▀▀▀ ▀
+# ▀▀ ▀▀ ▀ ▀▀▀ ▀▀  ▀▀▀ ▀
+-------------------------------
+
+// VEXL Arithmetic and IO Demonstration
+// Shows the new arithmetic operators and IO functions
+
+fn main() -> io () = {
+    print_string("=== VEXL Arithmetic and IO Demo ===\n")
+
+    // Test arithmetic operators
+    let a = 10
+    let b = 3
+    let c = 2.5
+
+    print("Basic arithmetic:")
+    print("a = " ++ format_int(a))
+    print("b = " ++ format_int(b))
+    print("c = " ++ format_float(c))
+
+    print("a + b = " ++ format_int(a + b))
+    print("a - b = " ++ format_int(a - b))
+    print("a * b = " ++ format_int(a * b))
+    print("a / b = " ++ format_int(a / b))
+
+    // Test vector operations
+    let nums = [1, 2, 3, 4, 5]
+    print("\nVector operations:")
+    print("nums = ")
+    print_vector(nums)
+
+    print("sum(nums) = " ++ format_int(sum(nums)))
+    print("max(nums) = " ++ format_int(max(nums)))
+    print("min(nums) = " ++ format_int(min(nums)))
+
+    // Test math functions
+    print("\nMath functions:")
+    print("sqrt(16.0) = " ++ format_float(sqrt(16.0)))
+    print("sin(pi/2) = " ++ format_float(sin(pi() / 2.0)))
+    print("cos(0.0) = " ++ format_float(cos(0.0)))
+
+    // Test vector transformations
+    print("\nVector transformations:")
+    let doubled = map(x => x * 2, nums)
+    print("map(x => x * 2, nums) = ")
+    print_vector(doubled)
+
+    let evens = filter(x => x % 2 == 0, nums)
+    print("filter(x => x % 2 == 0, nums) = ")
+    print_vector(evens)
+
+    // Test matrix printing
+    print("\nMatrix operations:")
+    let matrix = eye(3)
+    print("3x3 identity matrix:")
+    print_matrix_boxed(matrix)
+
+    // Test range creation
+    print("\nRange creation:")
+    let range1 = range(1, 10)
+    print("range(1, 10) = ")
+    print_vector(range1)
+
+    let range2 = range_step(0, 20, 5)
+    print("range_step(0, 20, 5) = ")
+    print_vector(range2)
+
+    // Test statistics
+    let data = [12, 15, 18, 22, 25, 28, 30]
+    print("\nStatistics:")
+    print("data = ")
+    print_vector(data)
+    print("mean(data) = " ++ format_float(mean(data)))
+    print("std_dev(data) = " ++ format_float(std_dev(data)))
+
+    print("\n=== Demo Complete ===")
+}

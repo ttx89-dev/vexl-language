@@ -1,0 +1,20 @@
+[package]
+name = "vexl-gpu"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+log = "0.4"
+rayon = { workspace = true }
+rand = "0.8"
+# GPU backend dependencies
+cudarc = { workspace = true, optional = true }
+opencl3 = { workspace = true, optional = true }
+ash = { workspace = true, optional = true }
+
+[features]
+default = ["vulkan"]
+cuda = ["cudarc"]
+opencl = ["opencl3"]
+vulkan = ["ash"]

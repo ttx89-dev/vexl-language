@@ -1,0 +1,5 @@
+// Vector operations test - should be executable
+let nums = [1, 2, 3, 4, 5]
+let doubled = nums |> map(x => x * 2)
+let sum = doubled |> reduce((a, b) => a + b, 0)
+sum

@@ -25,6 +25,10 @@ fn parser() -> impl Parser<Token, Expr, Error = Simple<Token>> {
         // ===== LITERALS =====
         let int = select! { Token::Int(n) => Expr::Int(n, span) };
         let float = select! { Token::Float(f) => Expr::Float(f, span) };
+        let bool_lit = select! {
+            Token::True => Expr::Bool(true, span),
+            Token::False => Expr::Bool(false, span)
+        };
         let string = select! { Token::String(s) => Expr::String(s, span) };
         let ident = select! { Token::Ident(s) => Expr::Ident(s, span) };
         
@@ -150,6 +154,7 @@ fn parser() -> impl Parser<Token, Expr, Error = Simple<Token>> {
         // ===== PRIMARY EXPRESSIONS =====
         let atom = int
             .or(float)
+            .or(bool_lit)
             .or(string)
             .or(let_expr)
             .or(if_expr)
@@ -311,6 +316,28 @@ mod tests {
         }
     }
     
+    #[test]
+    fn test_parse_bool_true() {
+        let result = parse("true");
+        assert!(result.is_ok());
+        if let Ok(Expr::Bool(b, _)) = result {
+            assert_eq!(b, true);
+        } else {
+            panic!("Expected Bool expression but got {:?}", result);
+        }
+    }
+
+    #[test]
+    fn test_parse_bool_false() {
+        let result = parse("false");
+        assert!(result.is_ok());
+        if let Ok(Expr::Bool(b, _)) = result {
+            assert_eq!(b, false);
+        } else {
+            panic!("Expected Bool expression but got {:?}", result);
+        }
+    }
+
     #[test]
     fn test_parse_ident() {
         let result = parse("foo");

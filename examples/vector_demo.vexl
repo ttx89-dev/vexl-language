@@ -1,0 +1,8 @@
+// VEXL Vector Operations Demo
+// Working example with vectors and standard library
+
+// Create a vector
+let numbers = [1, 2, 3, 4, 5]
+
+// Calculate sum using standard library
+sum(numbers)

@@ -1,5 +1,9 @@
-//! VEXL Package Manager
 
-pub fn package() -> Result<(), String> {
-    Ok(())
-}
+pub mod manifest;
+pub mod package;
+pub mod registry;
+pub mod resolver;
+pub mod security;
+
+pub use manifest::PackageManifest;
+pub use package::Package;

@@ -1,0 +1,9 @@
+[package]
+name = "vexl-stdlib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vexl-core = { path = "../vexl-core" }
+vexl-runtime = { path = "../vexl-runtime" }
+anyhow = "1.0"
