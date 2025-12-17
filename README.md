@@ -1,4 +1,4 @@
-# VEXL
+# VEXL [ PROJECT STOPPED ] 
 
 > **"What if everything was a vector?"**
 
