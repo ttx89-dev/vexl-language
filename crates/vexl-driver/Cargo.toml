@@ -15,3 +15,6 @@ vexl-syntax = { path = "../vexl-syntax" }
 vexl-types = { path = "../vexl-types" }
 vexl-ir = { path = "../vexl-ir" }
 vexl-codegen = { path = "../vexl-codegen" }
+vexl-runtime = { path = "../vexl-runtime" }
+inkwell = { version = "0.4", features = ["llvm14-0", "target-x86", "target-aarch64"], default-features = false }
+ctrlc = "3.4"

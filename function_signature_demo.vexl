@@ -1,0 +1,77 @@
+//! FUNCTION SIGNATURE SYSTEM DEMONSTRATION
+//! This script demonstrates the complete function signature system
+//! showing parameter passing, runtime function calls, and type safety
+
+// Test 1: Parameterless function
+fn simple_constant() -> i64 {
+    42
+}
+
+// Test 2: Function with single parameter
+fn double_value(x: i64) -> i64 {
+    x * 2
+}
+
+// Test 3: Function with multiple parameters
+fn add_three(a: i64, b: i64, c: i64) -> i64 {
+    a + b + c
+}
+
+// Test 4: Function calling other functions
+fn complex_calculation(x: i64) -> i64 {
+    let doubled = double_value(x);
+    let result = add_three(doubled, x, 10);
+    result
+}
+
+// Test 5: Runtime function calls (vector operations)
+fn vector_demo() -> i64 {
+    let vec = [1, 2, 3, 4, 5];
+    let sum = vec_sum(vec);
+    sum
+}
+
+// Test 6: Math functions
+fn math_demo() -> f64 {
+    let result = sin(3.14159 / 2.0); // Should be ~1.0
+    result
+}
+
+// Test 7: IO functions
+fn io_demo() -> i64 {
+    print_int(42);
+    0
+}
+
+// Main function demonstrating all capabilities
+fn main() -> i64 {
+    // Test parameterless function
+    let const_result = simple_constant();
+    print_int(const_result); // Should print 42
+
+    // Test single parameter function
+    let double_result = double_value(21);
+    print_int(double_result); // Should print 42
+
+    // Test multiple parameter function
+    let add_result = add_three(10, 15, 17);
+    print_int(add_result); // Should print 42
+
+    // Test function composition
+    let complex_result = complex_calculation(11);
+    print_int(complex_result); // Should print 42
+
+    // Test vector operations (runtime function calls)
+    let vec_result = vector_demo();
+    print_int(vec_result); // Should print 15
+
+    // Test math functions (runtime calls)
+    let math_val = math_demo();
+    print_float(math_val); // Should print ~1.0
+
+    // Test IO functions (runtime calls)
+    io_demo(); // Should print 42
+
+    // Return success
+    42
+}

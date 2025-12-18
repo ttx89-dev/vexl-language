@@ -82,6 +82,13 @@ impl CudaBackend {
 
 #[cfg(feature = "cuda")]
 impl GpuBackend for CudaBackend {
+    fn write_buffer(&self, _buffer: &GpuBuffer, _data: &[u8]) -> Result<()> {
+        Err(anyhow::anyhow!("CUDA backend not fully implemented"))
+    }
+
+    fn read_buffer(&self, _buffer: &GpuBuffer, _data: &mut [u8]) -> Result<()> {
+        Err(anyhow::anyhow!("CUDA backend not fully implemented"))
+    }
     fn name(&self) -> &str { "CUDA" }
 
     fn allocate(&self, size: usize) -> Result<GpuBuffer> {
@@ -180,6 +187,14 @@ impl CudaBackend {
 
 #[cfg(not(feature = "cuda"))]
 impl GpuBackend for CudaBackend {
+    fn write_buffer(&self, _buffer: &GpuBuffer, _data: &[u8]) -> Result<()> {
+        unimplemented!("CUDA feature not enabled")
+    }
+
+    fn read_buffer(&self, _buffer: &GpuBuffer, _data: &mut [u8]) -> Result<()> {
+        unimplemented!("CUDA feature not enabled")
+    }
+
     fn name(&self) -> &str { "CUDA" }
 
     fn allocate(&self, _size: usize) -> Result<GpuBuffer> {

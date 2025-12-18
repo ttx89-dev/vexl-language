@@ -3,7 +3,17 @@ use anyhow::Result;
 pub trait GpuBackend: Send + Sync {
     fn name(&self) -> &str;
     fn allocate(&self, size: usize) -> Result<GpuBuffer>;
+    fn write_buffer(&self, buffer: &GpuBuffer, data: &[u8]) -> Result<()>;
+    fn read_buffer(&self, buffer: &GpuBuffer, data: &mut [u8]) -> Result<()>;
     fn execute(&self, kernel: &ComputeKernel, args: &[GpuArg]) -> Result<()>;
+    fn execute_kernel(&self, name: &str, source: &str, args: &[GpuArg], work_size: u32) -> Result<()> {
+        let kernel = ComputeKernel {
+            name: name.to_string(),
+            source: source.to_string(),
+            entry_point: "main".to_string(),
+        };
+        self.execute(&kernel, args)
+    }
     fn read_back(&self, buffer: &GpuBuffer, size: usize) -> Result<Vec<u8>>;
 }
 
@@ -49,7 +59,7 @@ impl CpuFallbackBackend {
 
 impl GpuBackend for CpuFallbackBackend {
     fn name(&self) -> &str { "CpuFallback" }
-    
+
     fn allocate(&self, size: usize) -> Result<GpuBuffer> {
         // Validate allocation size
         if size == 0 {
@@ -71,14 +81,59 @@ impl GpuBackend for CpuFallbackBackend {
             ptr: ptr as *mut (),
         })
     }
-    
-    fn execute(&self, _kernel: &ComputeKernel, _args: &[GpuArg]) -> Result<()> {
-        // In a real fallback, this would interpret the kernel or run a CPU equivalent
-        log::warn!("Executing kernel on CPU fallback (no-op)");
+
+    fn write_buffer(&self, buffer: &GpuBuffer, data: &[u8]) -> Result<()> {
+        if data.len() > buffer.size {
+            return Err(anyhow::anyhow!("Data size {} exceeds buffer size {}", data.len(), buffer.size));
+        }
+        unsafe {
+            std::ptr::copy_nonoverlapping(data.as_ptr(), buffer.ptr as *mut u8, data.len());
+        }
         Ok(())
     }
-    
+
+    fn read_buffer(&self, buffer: &GpuBuffer, data: &mut [u8]) -> Result<()> {
+        if data.len() > buffer.size {
+            return Err(anyhow::anyhow!("Requested size {} exceeds buffer size {}", data.len(), buffer.size));
+        }
+        unsafe {
+            std::ptr::copy_nonoverlapping(buffer.ptr as *const u8, data.as_mut_ptr(), data.len());
+        }
+        Ok(())
+    }
+
+    fn execute(&self, kernel: &ComputeKernel, args: &[GpuArg]) -> Result<()> {
+        // Simple CPU kernel execution for vector operations
+        if kernel.name == "vector_add" && args.len() == 3 {
+            if let (GpuArg::Buffer(buf_a), GpuArg::Buffer(buf_b), GpuArg::Buffer(buf_c)) = (&args[0], &args[1], &args[2]) {
+                // Read input data
+                let data_a = self.read_back(buf_a, buf_a.size)?;
+                let data_b = self.read_back(buf_b, buf_b.size)?;
+
+                // Convert to f32 slices
+                let slice_a: &[f32] = bytemuck::cast_slice(&data_a);
+                let slice_b: &[f32] = bytemuck::cast_slice(&data_b);
+
+                // Perform vector addition
+                let result: Vec<f32> = slice_a.iter().zip(slice_b.iter()).map(|(a, b)| a + b).collect();
+
+                // Write result back
+                let result_bytes: &[u8] = bytemuck::cast_slice(&result);
+                self.write_buffer(buf_c, result_bytes)?;
+
+                return Ok(());
+            }
+        }
+
+        // For unsupported kernels, log warning
+        log::warn!("Executing kernel '{}' on CPU fallback (limited support)", kernel.name);
+        Ok(())
+    }
+
     fn read_back(&self, buffer: &GpuBuffer, size: usize) -> Result<Vec<u8>> {
+        if size > buffer.size {
+            return Err(anyhow::anyhow!("Requested size {} exceeds buffer size {}", size, buffer.size));
+        }
         let mut vec = Vec::with_capacity(size);
         unsafe {
             std::ptr::copy_nonoverlapping(buffer.ptr as *const u8, vec.as_mut_ptr(), size);

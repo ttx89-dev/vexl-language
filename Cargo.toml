@@ -12,15 +12,29 @@ members = [
     "crates/vexl-driver",
     "crates/vexl-lsp",
     "crates/vexl-pkg",
+    "crates/vexl-serialize",
+    "crates/vexl-storage",
     "tests/framework",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["VEXL Team"]
+authors = ["VEXL Team <vexl@ttx89.dev>"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/aequchain/vexl"
+repository = "https://github.com/ttx89-dev/vexl-language"
+homepage = "https://vexl.dev"
+documentation = "https://docs.vexl.dev"
+description = "High-performance programmable vector language - everything is a vector"
+keywords = ["language", "vector", "parallel", "high-performance", "gpu"]
+categories = ["compilers", "science", "mathematics"]
+
+[workspace.features]
+default = ["gpu"]
+gpu = ["vexl-gpu/default"]
+cuda = ["vexl-gpu/cuda"]
+opencl = ["vexl-gpu/opencl"]
+vulkan = ["vexl-gpu/vulkan"]
 
 [workspace.dependencies]
 # Core dependencies

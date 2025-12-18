@@ -93,6 +93,14 @@ impl OpenCLBackend {
 
 #[cfg(feature = "opencl")]
 impl GpuBackend for OpenCLBackend {
+    fn write_buffer(&self, _buffer: &GpuBuffer, _data: &[u8]) -> Result<()> {
+        Err(anyhow::anyhow!("OpenCL backend not fully implemented"))
+    }
+
+    fn read_buffer(&self, _buffer: &GpuBuffer, _data: &mut [u8]) -> Result<()> {
+        Err(anyhow::anyhow!("OpenCL backend not fully implemented"))
+    }
+
     fn name(&self) -> &str { "OpenCL" }
 
     fn allocate(&self, size: usize) -> Result<GpuBuffer> {
@@ -201,6 +209,14 @@ impl OpenCLBackend {
 
 #[cfg(not(feature = "opencl"))]
 impl GpuBackend for OpenCLBackend {
+    fn write_buffer(&self, _buffer: &GpuBuffer, _data: &[u8]) -> Result<()> {
+        unimplemented!("OpenCL feature not enabled")
+    }
+
+    fn read_buffer(&self, _buffer: &GpuBuffer, _data: &mut [u8]) -> Result<()> {
+        unimplemented!("OpenCL feature not enabled")
+    }
+
     fn name(&self) -> &str { "OpenCL" }
 
     fn allocate(&self, _size: usize) -> Result<GpuBuffer> {

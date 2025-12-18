@@ -66,7 +66,7 @@ impl LanguageServer for Backend {
         
         self.analysis.update_file(params.text_document.uri.clone(), params.text_document.text.clone());
 
-        let diags = diagnostics::get_diagnostics(&params.text_document.text);
+        let diags = diagnostics::diagnostics(&params.text_document.text, "current").unwrap_or_default();
         self.client.publish_diagnostics(params.text_document.uri, diags, None).await;
     }
 
@@ -75,7 +75,7 @@ impl LanguageServer for Backend {
         if let Some(change) = params.content_changes.first() {
              self.analysis.update_file(params.text_document.uri.clone(), change.text.clone());
              
-             let diags = diagnostics::get_diagnostics(&change.text);
+             let diags = diagnostics::diagnostics(&change.text, "current").unwrap_or_default();
              self.client.publish_diagnostics(params.text_document.uri, diags, None).await;
         }
     }

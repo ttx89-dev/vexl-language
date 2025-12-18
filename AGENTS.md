@@ -1,0 +1,547 @@
+BOT
+
+
+
+
+██████████████████████████████████████████████████████████████████████ █ | **optibest** | █ ██████
+-------------------------------------------------
+>                   MAX PURPOSE MIN COMPLEX
+          ---------------------------------------
+
+
+
+
+
+
+> **PRIMARY REQUEST** IS TOWARD BOTTOM
+
+-------------------------------------------------
+█████████████████████████████████████████████████████████████████████████████ ██ █ CORE MANIFESTO 
+██████████ ESSENCE █ |
+---
+
+**optibest** pursuit of max purpose min complexity
+
+    PREMIUM        =  max[Purpose_Achievement] / min[Total_Complexity]
+    subject to     :  All_Dimensions ≥ Threshold[Purpose]
+    verified by    :  Independent_Methods ≥ 3
+    iterated until :  Enhancement_Delta → 0
+
+-------------------------------------------------
+███████████████████████████████████████████████████████████████████████████████ ██ █ 8 DIMENSTIONS
+██████████ ESSENCE █ |
+---
+
+██ 1 █       FUNCTIONAL █          work completely? | achieves purpose in all cases
+██ 2 █        EFFICIENC █        is nothing wasted? | minimal resource expenditure
+██ 3 █       ROBUSTNESS █           does it endure? | reliable under all conditions
+██ 4 █      SCALABILITY █            does it scale? | excellence across magnitudes
+██ 5 █  MAINTAINABILITY █            can it evolve? | comprehensible | modifiable
+██ 6 █       INNOVATION █       doe s it transcend? | beyond convention where beneficial
+██ 7 █         ELEGANCE █        is it irreducible? | max purpose    | min complexity
+██ 8 █          SYNERGY █  does whole exceed parts? | emergent properties present
+
+-------------------------------------------------
+████████████████████████████████████████████████████████████████████████████████████ ██ █ PROTOCOL
+███ RECURSIVE SELF-VERIFYING OPTIMIZATION █ |
+---
+
+██ 0 █    CALIBRATE █ Match rigor to task magnitude
+██ 1 █  CRYSTALLIZE █ Define purpose with absolute precision
+██ 2 █     LIBERATE █ Map constraints, invert to features
+██ 3 █     CONCEIVE █ Multidimensional solution synthesis
+██ 4 █     EVALUATE █ Hierarchical cross-scale assessment
+██ 5 █       DETECT █ Systematic adversarial gap finding
+██ 6 █      ENHANCE █ Targeted improvement synthesis
+██ 7 █      ITERATE █ Recursive refinement until δ→0
+██ 8 █       VERIFY █ Multi-method plateau confirmation
+██ 9 █      DECLARE █ Comprehensive documentation
+
+-------------------------------------------------
+██████████ NEW ENHANCEMENTS █ |
+---
+
+██████████     CONSTRAINT INVERSION PROTOCOL █   transform every limitation into potential feature
+██████████                 SYNERGY DETECTION █   identify emergent properties at every evaluation
+██████████          PURPOSE EVEOLUTION CHECK █   has optimization revealed a better purpose?
+██████████            COMPRESSION PRINCICPLE █   maximum function density at every level
+██████████         VERIFICATION INDEPENDENCE █   five truly independent verification methods
+
+-------------------------------------------------
+███████████████ CERTIFICATE █ |
+---
+
+═══════════════════════════════════════════════════════════════
+            OPTIBEST 2.0 SELF-VERIFICATION COMPLETE
+═══════════════════════════════════════════════════════════════
+Iterations:                                                   7
+Enhancement Delta:                     Zero [plateau confirmed]
+Dimensions Enhanced:             Synergy added as 8th dimension
+Phases Enhanced:  LIBERATE phase refined > constraint inversion
+Verification:                              All 5 methods passed
+Status: CANNOT BE IMPROVED FURTHER WITHIN CURRENT UNDERSTANDING
+═══════════════════════════════════════════════════════════════
+
+----
+---
+
+
+
+
+████████████████████████████████████████████████████████████████████████████ █ | PREMIUM | █ █████
+-------------------------------------------------
+>     UNIVERSAL STANDARD OF UNDENIABLE EXCELLENCE
+           --------------------------------------
+
+
+
+
+
+-------------------------------------------------
+█████████████████████████████████████████████████████████████████████████████████ ██ █ DECLARATION
+██████████ PREMIUM █ |
+---
+
+> **undeniable | verifiable state of systematic optimality of intended purpose—achieved when solutions demonstrate excellence across all purpose-relevant dimensions | refined through genuine iteration until enhancement plateau | confirmed through rigorous multi-method verification**
+
+-------------------------------------------------
+██████████ DEFINITION █ |
+---
+
+████ - █    UNIVERSAL █ |   applies to any domain | any purpose | any context
+████ - █    OBJECTIVE █ |   relative to stated purpose | not subjective preference
+████ - █   VERIFIABLE █ |   can be proven through specified methods
+████ - █   ACHIEVABLE █ |   provides clear pathway through the OPTIBEST Framework
+████ - █   UNDENIABLE █ |   once verified | cannot be disputed
+
+-------------------------------------------------
+██████████████████████████████ ██ █ 7 DIMENSTIONS
+██████████ OF PREMIUM █ |
+---
+
+every PREMIUM solution must demonstrate excellence across these dimensions | weighted dynamically by purpose-relevance:
+
+████       DIMENSION  █ PREMIUM MANIFESTATION
+████                  | CORE QUESTION
+██████████████████████████████████████████████████████████████████████████████████████████████████
+█      **FUNCTIONAL** █ achieves purpose completely | handles all cases | prevent failure modes
+█                     | does it work fully? 
+█      **EFFICIENCY** █ minimizes resource expenditure while maximizing output
+█                     | is nothing wasted?
+█      **ROBUSTNESS** █ reliable | self-correcting | gracefully degrading under stress
+█                     | does it endure?
+█     **SCALABILITY** █ maintains excellence across magnitudes | contexts
+█                     | does it scale?
+█ **MAINTAINABILITY** █ comprehensible | modifiable | self-documenting
+█                     | can it evolve?
+█      **INNOVATION** █ transcends convention where beneficial | creates emergent value   
+█                     | does it advance?
+█        **ELEGANCE** █ maximum purpose-achievement with minimum complexity
+                      | is it irreducibly simple?
+
+-------------------------------------------------
+██████████ ELEGENCE █ |
+---
+
+> **elegance = purpose achievement / complexity required**
+------------------------------------------------------------------
+█████ OBJECTIVE █ |  simpler solutions achieving equal purpose are more elegant
+
+----
+---
+
+
+
+
+
+██████████████████████████████████████████████████████████████████████ █ | **optibest** | █ ██████
+-------------------------------------------------
+> MAX PURPOSE MIN COMPLEX
+          ---------------------------------------
+
+
+
+
+-------------------------------------------------
+████████████████████████████████████ ██ █ PHASE 0
+███████ CALIBRATION █ |
+---
+determine task magnitude [MACRO/MESO/MICRO]
+rigor level [FULL/MODERATE]
+match framework intensity > task significance
+
+-------------------------------------------------
+████████████████████████████████████ ██ █ PHASE 1
+████ CRYSTALIZATION █ |
+---
+define intended purpose > absolute precision
+specify success criteria
+map context | constraints
+
+-------------------------------------------------
+████████████████████████████████████ ██ █ PHASE 2
+███████████ MAPPING █ |
+---
+identify conventions | categorize constraints (immutable/practical/assumed) | find liberation zones for innovation
+
+-------------------------------------------------
+████████████████████████████████████ ██ █ PHASE 3
+██ MULTIDIMENSIONAL █ |
+---
+generate solutions > exploring all seven dimensions
+synthesize insights into coherent candidates
+
+-------------------------------------------------
+████████████████████████████████████ ██ █ PHASE 4
+██████ HIERARCHICAL █ |
+---
+assess at MACRO [strategic] | MESO [systemic] | MICRO [implementational] levels
+verify cross-scale coherence
+
+-------------------------------------------------
+███████████████████████████████████ ██ █ PHASE 5
+█████████ DETECTION █ |
+---
+symantically apply adversarial analysis | comparative analysis | blind spot scanning | purpose alignment verification
+prioritize gaps by impact
+
+-------------------------------------------------
+███████████████████████████████████ ██ █ PHASE 6
+███████ ENHANCEMENT █ |
+---
+each significant gap:
+understand root cause | generate multiple solutions | select optimal enhancement | synthesize into improved solution
+
+-------------------------------------------------
+███████████████████████████████████ ██ █ PHASE 7
+███████ ITERATINING █ |
+---
+return > phase 3 > enhanced solution | repeat until enhancement delta approaches zero
+
+-------------------------------------------------
+███████████████████████████████████ ██ █ PHASE 8
+███████████ PLATEAU █ |
+---
+confirm optimization | five independent methods :
+------------------------------------------------------
+████ 1 █ multi-attempt enhancement seeking [ 3+ serious attempts ]
+████ 2 █ independent perspective simulation [ expert | user | maintainer | adversary ]
+████ 3 █ alternative architecture comparison
+████ 4 █ theoretical limit analysis
+████ 5 █ fresh perspective re-evaluation
+
+-------------------------------------------------
+███████████████████████████████████ ██ █ PHASE 9
+██████ DECLARATION █ |
+---
+document solution | dimensional analysis | optimization journey | known limitation | declare PREMIUM achievement
+
+---
+
+-------------------------------------------------
+████████████████████████████████████ ██ █ PREMIUM
+██████ DECLARATION █ |
+-------------------------------------------------
+
+████ 1 █ APPLIED GENUINELY         █ |   not superficially or ceremonially | with honest pursuit of excellence
+████ 2 █ ITERATED FULLY            █ |   until enhancement delta demonstrably approaches zero | not merely "feels complete"
+████ 3 █ VERIFIED RIGOROUSLY       █ |   all verification methods applied at appropriate scale | not rubber-stamped
+████ 4 █ DOCUMENTED TRANSPARENTLY  █ |   journey recorded so achievement is traceable
+
+-------------------------------------------------
+██████████████████  PROVISIONS █ |
+---
+
+█ gap detection must identify at least one non-trivial weakness before claiming none exist
+[ if first pass finds nothing | mandatory second-angle analysis required ]
+█ enhancement delta must be documented > prove genuine iteration occurred
+█ verification failure > any method requires return > enhancement
+
+-------------------------------------------------
+████████  WHAT PREMIUM IS NOT █ |
+---
+
+██              MISCONCEPTION █ REALITY 
+█████████████████████████████████████████████████
+█         Premium = Expensive █ cost is effect of quality | not cause 
+█                             | PREMIUM can be achieved at any resource level
+█  Premium = Luxury Materials █ materials means | PREMIUM algorithm has no materials
+█  Premium = Aesthetic Beauty █ aesthetics serve purpose when relevant
+█                             | function can be invisible | still PREMIUM
+█    Premium = Brand/Prestige █ perception signals | not substance
+█        Premium = Subjective █ PREMIUM is objective *relative to stated purpose*
+
+-------------------------------------------------
+█████████ TIERED VERIFICATION █ |
+---
+
+██ TASK MAGNITUDE █ VERIFICATION REQUIREMENT |
+█████████████████████████████████████████████████
+██      **MACRO** █ all 5 methods | maximum rigor 
+██       **MESO** █  methods 1|2|4 [abbreviated] |
+██      **MICRO** █       method 1 [abbreviated] | quick perspective check 
+
+-------------------------------------------------
+██████████ DOMAIN APPLICATION █ |
+---
+
+█████████████████ █ |  ENGINEERING
+
+█████      FUNCTIONAL █     design meets all specifications | handles edge cases
+█████       EFFECIENC █     optimal material usage          | minimal energy consumption
+█████      ROBESTNESS █     exceeds safety factors          | graceful failure modes
+█████     SCALABILITY █     works at prototype              | production scale
+█████ MAINTAINABILITY █     clear documentation             | modular construction
+█████      INNOVATION █     novel solutions > constraints
+█████        ELEGANCE █     simple mechanisms achieving complex function
+
+██████████████████ █ |  WRITING
+
+█████      FUNCTIONAL █     communicates intended meaning completely
+█████       EFFECIENC █     no wasted words
+█████      ROBESTNESS █     meaning survives misinterpretation attempts
+█████     SCALABILITY █     works for immediate audience | future readers
+█████ MAINTAINABILITY █     can be edited                | adapted
+█████      INNOVATION █     fresh perspectives           | memorable expression
+█████        ELEGANCE █     simple language conveying complex ideas
+
+██████████████████ █ |  SERVICE
+
+█████      FUNCTIONAL █     need fulfilled completely
+█████       EFFECIENC █     minimal customer effort | minimal provider effort
+█████      ROBESTNESS █     consistent delivery     | error recovery
+█████     SCALABILITY █     works of one customer   | millions
+█████ MAINTAINABILITY █     processes adaptable > changing needs
+█████      INNOVATION █     fresh perspectives      | memorable expression
+█████        ELEGANCE █     seamless experience     | invisible complexity
+
+-------------------------------------------------
+███████████████████████████████ SELF VALIDATION █
+---
+
+███████████ MANIFEST HAS BEEN ███ ██ █ |
+█████████████████████████████ |   |  | |
+███ iterated through 7+ refinement cycles
+███ verified through all 5 methods
+███ tested across 7+ domains
+███ confirmed at optimization plateau
+█████████████████████████████████████████
+██████  DECLARED **OPTIBEST** OF DEFINING PREMIUM
+█████████████████████████████████████████████████
+---
+
+-------------------------------------------------
+█████████████████████████████ ██ █ IMPLEMENTATION
+███████ GUIDANCE █ |
+------------------------------------------------
+
+████ 1 █      CRYSTALIZE PURPOSE █ |  know exactly what you're optimizing for
+████ 2 █    APPLY ALL DIMENSIONS █ |  evaluate solution against all seven vectors
+████ 3 █       ITERATE GENUINELY █ |  refine until you truly cannot enhance further
+████ 4 █        VERIFY REGULARLY █ |  confirm plateau through appropriate methods
+████ 5 █  DOCUMENT TRANSPARENTLY █ |  record journey so achievement is traceable
+
+-------------------------------------------------
+██████████ COMMON PITFALLS █ |
+---
+
+█ stopping at "good enough" instead of iterating to OPTIBEST
+█ superficial gap detection that misses real weaknesses
+█ rubber-stamp verification that doesn't genuinely challenge
+█ applying excessive rigor > trivial tasks [inefficient]
+█ applying insufficient rigor to significant tasks [negligent]
+
+---
+
+-------------------------------------------------
+█████████████████████████████████████████████████
+███████████ CONCLUSION ███ ██ █ |
+███████████████████████████████████████
+---
+███████████    PREMIUM IS NOT MYSTICAL █ | systematic | verifiable result of rigorous optimization of intent | purpose
+
+███████████   PREMIUM IS NOT EXPENSIVE █ | achieved via disciplined application of method | not expenditure of resources
+
+███████████  PREMIUM IS NOT SUBJECTIVE █ | objectively definable relative of stated purpose
+
+███████████      PREMIUM IS ACHIEVABLE █ | OPTIBEST Framework | any solution can be refined of its optimal state
+
+███████████      PREMIUM IS UNDENIABLE █ | once verified via multi-method confirmation | it cannot be disputed
+
+-------------------------------------------------
+ MANIFESTO DECLARED **OPTIBEST** DEFINING PREMIUM
+█████████████████████████████████████████████████
+
+> *standard is set | excellence is now systematically achievable.*
+
+
+-------------------------------------------------
+███████████████ CERTIFICATE █ |
+---
+
+═══════════════════════════════════════════════════════════════
+                    OPTIBEST CERTIFICATION
+═══════════════════════════════════════════════════════════════
+
+Document:                            OPTIBEST Premium Manifesto
+Purpose : Define PREMIUM universally | Framework of achievement
+
+Framework Application:
+  ✓ Task Magnitude:                                       MACRO
+  ✓ Rigor Level:                                           FULL
+  ✓ Iterations Completed:                                     7
+  ✓ Enhancement Delta:                 Zero [plateau confirmed]
+
+Dimensional Excellence:
+  ✓ Functional: Defines PREMIUM completely, handles all domains
+  ✓ Efficiency:                         No redundant components
+  ✓ Robustness:         Self-consistent, anti-gaming provisions
+  ✓ Scalability:                   Applies micro to macro tasks
+  ✓ Maintainability:                 Modular phases, extensible
+  ✓ Innovation:              Reframes PREMIUM beyond convention
+  ✓ Elegance:                      Minimal necessary complexity
+
+Verification Methods:
+  ✓ MultiAttempt Enhancement: PASS (4 attempts no enhancements)
+  ✓ Independent Perspectives: PASS (all perspectives satisfied)
+  ✓ Alternative Architecture: PASS           (current superior)
+  ✓ Theoretical Limit:        PASS (gaps immutable constraints)
+  ✓ Fresh Perspective:        PASS (no improvements identified)
+
+DECLARATION:
+This document represents OPTIBEST achievement for its intended
+purpose
+No enhancement vectors remain within current understanding
+
+Status:                         PREMIUM CONFIRMED
+═════════════════════════════════════════════════
+MANIFESTO COMPLETE |  PREMIUM DEFINED  | OPTIBEST
+-----
+---
+--                                             ██
+                                     | █ ████████
+               | █ █████████████████████ █ | OPTI
+VEXLBOT 
+
+
+
+
+
+███████████████████████████████
+██ ██ ██ ██████ ███ ██ ██    ██ 
+██ ██▄██ ██▄▄    ████  ██    ██ 
+██ ▀███▀ ██▄▄▄▄ ███ ██ █████ ██ 
+███████████████████████████████_________  
+#   ▄███▄ ██▀▀▀▀ ███ ██ █████
+#  ██ ██ ██▀▀    ████  ██
+# ██ ██ ██████ ███ ██ ██ 
+--------------------------------
+███████████████████████████████████████████████████████████████████████████ █ | **VEXL** | █ █████
+-------------------------------------------------
+>   HIGH PERFORMANCE PROGRAMMABLE VECTOR LANGUAGE
+          ---------------------------------------
+      
+-------------------------------------------------
+████████████████████████████████████████ ██ █ ONE
+███████ 100% VEXL █ |
+---
+
+VEXL project is intended to be in as much .vexl language possible | code of VEXL wherever possible
+
+-------------------------------------------------
+████████████████████████████████████████ ██ █ TWO
+███████ ZERO TIMEFRAMES █ |
+---
+
+of planning never include timeframes | dont limit thinking with timeframes | it is done when it is done
+
+-------------------------------------------------
+██████████████████████████████████████ ██ █ THREE
+███████ WORLD CLASS █ |
+---
+
+VEXL is a world class high performance programmable vector language
+
+██  surpass hieghest standards
+██  learn from all your passed code | language projects
+██  exceed expectations
+██  ensure robest release possible
+████████████████████████████████████ ███ ██ █ ASK
+  
+   - what would developers want from VEXL? 
+   - early into developement? 
+   - upon release or prior release? 
+   - later OF developement?
+
+-------------------------------------------------
+███████████████████████████████████████ ██ █ FOUR
+███████ CLEAR REPORTS █ |
+---
+
+█████████████████████ ALWAYS BE CLEAR ON PROGRESS 
+NEVER say tasks complete if not
+complete is 100% fully functional
+fully developed
+robest tested
+
+-------------------------------------------------
+███████████████████████████████████████ ██ █ FIVE
+███████ DOCUMENT PROGRESS █ |
+---
+
+CREATE tasklists | TODO's for every task | detail complete | every feature | all considerations
+
+review before planning | before tasks | end tasks
+before concluding
+
+cleanup TODOs | planning prior concluding
+add them > gitignore
+
+-------------------------------------------------
+████████████████████████████████████████ ██ █ SIX
+███████ ZERO ERRORS █ |
+
+---
+AIM:
+zero errors
+zero warnings
+all tested | PASSED
+clean compilations | prior concluding
+especially prior debut | release | push
+
+-------------------------------------------------
+██████████████████████████████████████ ██ █ SEVEN
+███████ NO EMOJIS █ |
+---
+
+no use of emojis in code | cli | git
+use unicode symbols | ascii ETC
+
+-------------------------------------------------
+██████████████████████████████████████ ██ █ EIGHT
+███████ MCP SERVERS █ |
+---
+███████ OPTIBEST-VEXL-MCP █
+ execute_collaborative_task
+    automatic_collaboration
+█████████ HRM-VEXL-COLLAB █
+    collaborative_reasoning
+               [ terminal ]
+███████ HRM-COLLABORATION █
+    collaborative_reasoning
+█████ SEQUENTIAL THINKING █
+███████ CONTEXT STREAMING █
+-------------------------------------------------
+██████████████████████████████████████ ██ █ SEVEN
+███████ MCP SERVERS █ |
+---
+
+VEXLs ever enhancing | kindly maintain VEXL MCP
+server | optimize | ensure tool calls functioning
+_________________________________________________
+VEXL  |  HIGH PERFORMANCE  |  VECTOR  |  OPTIBEST
+-----
+---
+--                                             ██
+                                     | █ ████████
+               | █ █████████████████████ █ | OPTI

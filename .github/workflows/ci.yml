@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: [stable, beta]
+        exclude:
+          - os: macos-latest
+            rust: beta
+          - os: windows-latest
+            rust: beta
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ matrix.rust }}
+
+    - name: Cache dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+
+    - name: Check clippy
+      run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+    - name: Build workspace
+      run: cargo build --workspace --verbose
+
+    - name: Run tests
+      run: cargo test --workspace --verbose
+
+    - name: Run doctests
+      run: cargo test --workspace --doc
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-audit
+      run: cargo install cargo-audit
+
+    - name: Run security audit
+      run: cargo audit
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: llvm-tools-preview
+
+    - name: Install cargo-llvm-cov
+      run: cargo install cargo-llvm-cov
+
+    - name: Generate coverage
+      run: cargo llvm-cov --workspace --lcov --output-path lcov.info
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: lcov.info
+        fail_ci_if_error: false
+
+  release:
+    name: Release Build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Build release
+      run: cargo build --release --workspace
+
+    - name: Run release tests
+      run: cargo test --release --workspace
+
+    - name: Create release archive
+      run: |
+        tar -czf vexl-linux-x64.tar.gz -C target/release vexl
+        ls -la vexl-linux-x64.tar.gz
+
+    - name: Upload release artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: vexl-linux-x64
+        path: vexl-linux-x64.tar.gz

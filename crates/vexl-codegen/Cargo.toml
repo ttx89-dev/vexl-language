@@ -6,6 +6,7 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-inkwell = { version = "0.4", features = ["llvm14-0"], default-features = false }
+inkwell = { version = "0.4", features = ["llvm14-0", "target-x86", "target-aarch64"], default-features = false }
 vexl-ir = { path = "../vexl-ir" }
 vexl-core = { path = "../vexl-core" }
+libc = "0.2"

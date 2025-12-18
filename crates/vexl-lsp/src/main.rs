@@ -3,6 +3,7 @@
 
 mod analysis;
 mod features;
+mod semantic;
 mod server;
 
 use server::Backend;

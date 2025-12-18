@@ -8,6 +8,21 @@ pub struct Span {
     pub end: usize,
 }
 
+/// VEXL top-level declaration or expression
+#[derive(Debug, Clone, PartialEq)]
+pub enum Decl {
+    /// Function declaration
+    Function {
+        name: String,
+        params: Vec<(String, Type)>,
+        return_type: Type,
+        body: Expr,
+        span: Span,
+    },
+    /// Top-level expression
+    Expr(Expr),
+}
+
 /// VEXL expression
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {

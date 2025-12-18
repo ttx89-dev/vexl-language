@@ -1,12 +1,10 @@
 //! Garbage collection for VEXL runtime
 
-#![allow(static_mut_refs)]
-
 use std::collections::HashSet;
 use std::sync::RwLock;
 
 /// GC root registry
-static mut GC_REGISTRY: Option<GcRegistry> = None;
+static GC_REGISTRY: std::sync::OnceLock<GcRegistry> = std::sync::OnceLock::new();
 
 /// Garbage collector state
 pub struct GcRegistry {
@@ -71,50 +69,36 @@ impl GcRegistry {
 /// Initialize garbage collector
 pub fn init_gc() {
     let threshold = 256 * 1024 * 1024; // 256MB default
-    unsafe {
-        GC_REGISTRY = Some(GcRegistry::new(threshold));
-    }
+    GC_REGISTRY.get_or_init(|| GcRegistry::new(threshold));
 }
 
 /// Shutdown garbage collector
 pub fn shutdown_gc() {
-    unsafe {
-        GC_REGISTRY = None;
-    }
+    // Note: OnceLock doesn't allow dropping, so this is a no-op for now
+    // In a full implementation, we'd need a different approach for shutdown
+}
+
+/// Get reference to GC registry
+fn gc_registry() -> &'static GcRegistry {
+    GC_REGISTRY.get().expect("GC not initialized")
 }
 
 /// Register allocation with GC
 pub fn gc_register(ptr: *mut u8, size: usize) {
-    unsafe {
-        if let Some(ref gc) = GC_REGISTRY {
-            gc.register(ptr, size);
-        }
-    }
+    gc_registry().register(ptr, size);
 }
 
 /// Unregister allocation from GC
 pub fn gc_unregister(ptr: *mut u8) {
-    unsafe {
-        if let Some(ref gc) = GC_REGISTRY {
-            gc.unregister(ptr);
-        }
-    }
+    gc_registry().unregister(ptr);
 }
 
 /// Trigger garbage collection
 pub fn gc_collect() {
-    unsafe {
-        if let Some(ref gc) = GC_REGISTRY {
-            gc.collect();
-        }
-    }
+    gc_registry().collect();
 }
 
 /// Check if GC should run
 pub fn gc_should_collect() -> bool {
-    unsafe {
-        GC_REGISTRY.as_ref()
-            .map(|gc| gc.should_collect())
-            .unwrap_or(false)
-    }
+    gc_registry().should_collect()
 }

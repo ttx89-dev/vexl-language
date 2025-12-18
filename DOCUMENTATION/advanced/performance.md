@@ -75,16 +75,16 @@ performance_report()
 ### Profiling Output
 
 ```
-🚀 VEXL Performance Profile
+ VEXL Performance Profile
 ═══════════════════════════════════════════════
 
-📊 Overall Performance:
+ Overall Performance:
    Total Execution Time: 1.23s
    CPU Utilization: 85%
    GPU Utilization: 92%
    Memory Bandwidth: 8.5 GB/s
 
-🔍 Section Breakdown:
+ Section Breakdown:
    data_processing: 0.89s (72%)
      - Vector fusion applied: 3 operations
      - SIMD utilization: 95%
@@ -95,7 +95,7 @@ performance_report()
      - Data transfer: 0.03s
      - Backend: Vulkan
 
-💡 Optimization Recommendations:
+ Optimization Recommendations:
    - Consider GPU pre-warming for repeated operations
    - Memory layout could benefit from SoA conversion
    - Potential 15% speedup with kernel optimization
@@ -420,11 +420,11 @@ VEXL performance optimization follows the **OPTIBEST** framework, delivering max
 
 ### Key Achievements
 
-- ✅ **Automatic CPU/GPU Hybrid**: Intelligent workload distribution
-- ✅ **Memory Optimization**: Advanced layout and access pattern optimization
-- ✅ **Parallel Processing**: Multi-core and GPU parallelization
-- ✅ **Profiling Tools**: Comprehensive performance analysis
-- ✅ **Hardware Awareness**: Platform-specific optimizations
+-  **Automatic CPU/GPU Hybrid**: Intelligent workload distribution
+-  **Memory Optimization**: Advanced layout and access pattern optimization
+-  **Parallel Processing**: Multi-core and GPU parallelization
+-  **Profiling Tools**: Comprehensive performance analysis
+-  **Hardware Awareness**: Platform-specific optimizations
 
 ### Continuous Optimization
 
@@ -438,6 +438,6 @@ Performance optimization in VEXL is an ongoing process:
 
 ---
 
-**Built with ❤️ using the OPTIBEST framework**
+**Built with ❤ using the OPTIBEST framework**
 
 *VEXL Performance: Maximum efficiency, zero compromise*

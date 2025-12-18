@@ -1,7 +1,7 @@
 //! AST to VIR lowering
 
-use crate::{VirModule, Instruction, InstructionKind, ValueId};
-use vexl_syntax::ast::{Expr, BinOpKind};
+use crate::{VirModule, VirFunction, VirType, FunctionSignature, BasicBlock, Terminator, Instruction, InstructionKind, ValueId, BlockId};
+use vexl_syntax::ast::{Decl, Expr, BinOpKind, Type};
 use std::collections::HashMap;
 
 /// Context for lowering AST to VIR
@@ -23,7 +23,7 @@ impl LoweringContext {
     /// Emit an instruction and return its result value
     fn emit(&mut self, kind: InstructionKind) -> ValueId {
         let result = self.module.fresh_value();
-        self.current_instructions.push(Instruction { result, kind });
+        self.current_instructions.push(Instruction { result, result_type: None, kind });
         result
     }
     
@@ -123,55 +123,62 @@ impl LoweringContext {
                 // Handle function calls
                 match &**func {
                     Expr::Ident(name, _) => {
+                        // Lower all arguments first
+                        let mut lowered_args = Vec::new();
+                        for arg in args {
+                            lowered_args.push(self.lower_expr(arg)?);
+                        }
+
                         match name.as_str() {
                             "sum" => {
-                                if args.len() == 1 {
-                                    let vec_val = self.lower_expr(&args[0])?;
+                                if lowered_args.len() == 1 {
                                     Ok(self.emit(InstructionKind::RuntimeCall {
                                         function_name: "vexl_vec_sum".to_string(),
-                                        args: vec![vec_val],
+                                        args: lowered_args,
                                     }))
                                 } else {
                                     Err("sum() expects one argument".to_string())
                                 }
                             }
                             "print" => {
-                                if args.len() == 1 {
-                                    let arg_val = self.lower_expr(&args[0])?;
+                                if lowered_args.len() == 1 {
                                     // For now, assume all prints are integers
                                     // TODO: Type-based dispatch to print_int, print_string, etc.
                                     Ok(self.emit(InstructionKind::RuntimeCall {
                                         function_name: "vexl_print_int".to_string(),
-                                        args: vec![arg_val],
+                                        args: lowered_args,
                                     }))
                                 } else {
                                     Err("print() expects one argument".to_string())
                                 }
                             }
                             "len" => {
-                                if args.len() == 1 {
-                                    let vec_val = self.lower_expr(&args[0])?;
+                                if lowered_args.len() == 1 {
                                     Ok(self.emit(InstructionKind::RuntimeCall {
                                         function_name: "vexl_vec_len".to_string(),
-                                        args: vec![vec_val],
+                                        args: lowered_args,
                                     }))
                                 } else {
                                     Err("len() expects one argument".to_string())
                                 }
                             }
                             "get" => {
-                                if args.len() == 2 {
-                                    let vec_val = self.lower_expr(&args[0])?;
-                                    let index_val = self.lower_expr(&args[1])?;
+                                if lowered_args.len() == 2 {
                                     Ok(self.emit(InstructionKind::RuntimeCall {
                                         function_name: "vexl_vec_get_i64".to_string(),
-                                        args: vec![vec_val, index_val],
+                                        args: lowered_args,
                                     }))
                                 } else {
                                     Err("get() expects two arguments (vec, index)".to_string())
                                 }
                             }
-                            _ => Err(format!("Unknown function: {}", name)),
+                            // User-defined function calls
+                            _ => {
+                                Ok(self.emit(InstructionKind::Call {
+                                    func: name.clone(),
+                                    args: lowered_args,
+                                }))
+                            }
                         }
                     }
                     _ => Err("Complex function calls not yet supported".to_string()),
@@ -182,6 +189,76 @@ impl LoweringContext {
                 let val = self.lower_expr(value)?;
                 self.variables.insert(name.clone(), val);
                 self.lower_expr(body)
+            }
+
+            Expr::Fix { name, body, .. } => {
+                // For fix f => e, we create a recursive binding
+                // For evaluation purposes, we can treat this as just the body
+                // since we're not doing complex recursion analysis
+                self.lower_expr(body)
+            }
+
+            Expr::Lambda { params, body, .. } => {
+                // Create a new function with parameters
+                let func_name = format!("lambda_{}", self.module.functions.len());
+
+                // Create parameter ValueIds
+                let mut param_values = Vec::new();
+                let mut param_map = HashMap::new();
+
+                for param_name in params {
+                    let param_value = self.module.fresh_value();
+                    param_values.push(param_value);
+                    param_map.insert(param_name.clone(), param_value);
+                }
+
+                // Save current context
+                let old_variables = self.variables.clone();
+                let old_instructions = self.current_instructions.clone();
+
+                // Set up parameter bindings in new scope
+                self.variables.extend(param_map);
+                self.current_instructions.clear();
+
+                // Lower the function body
+                let body_result = self.lower_expr(body)?;
+
+                // Create function signature
+                let param_types = vec![VirType::Int64; params.len()]; // Assume all params are i64 for now
+                let signature = FunctionSignature::new(param_types, VirType::Int64);
+
+                // Create basic block
+                let block_id = self.module.fresh_block();
+                let block = BasicBlock {
+                    id: block_id,
+                    instructions: std::mem::take(&mut self.current_instructions),
+                    terminator: Terminator::Return(body_result),
+                };
+
+                // Create function
+                let mut blocks = HashMap::new();
+                blocks.insert(block_id, block);
+
+                let func = VirFunction {
+                    name: func_name.clone(),
+                    params: param_values,
+                    blocks,
+                    entry_block: block_id,
+                    effect: vexl_core::Effect::Pure,
+                    signature,
+                };
+
+                // Add function to module
+                self.module.add_function(func_name.clone(), func);
+
+                // Restore context
+                self.variables = old_variables;
+                self.current_instructions = old_instructions;
+
+                // Return the function (as a value that can be called)
+                // For now, return a placeholder - in full implementation,
+                // we'd return a function pointer value
+                Ok(self.emit(InstructionKind::ConstInt(0)))
             }
             
             
@@ -251,24 +328,31 @@ impl LoweringContext {
                     }
                 }
 
-                // Regular function call
-                let func_val = self.lower_expr(func)?;
+                // Regular function call - extract function name
+                let func_name = match &**func {
+                    Expr::Ident(name, _) => name.clone(),
+                    _ => return Err("Complex function calls in pipelines not yet supported".to_string()),
+                };
+
                 let mut call_args = vec![input]; // Input as first argument
                 for arg in args {
                     call_args.push(self.lower_expr(arg)?);
                 }
 
                 Ok(self.emit(InstructionKind::Call {
-                    func: func_val,
+                    func: func_name,
                     args: call_args,
                 }))
             }
 
             _ => {
                 // For now, treat as function call with single argument
-                let func_val = self.lower_expr(stage)?;
+                let func_name = match stage {
+                    Expr::Ident(name, _) => name.clone(),
+                    _ => return Err("Complex function calls in pipelines not yet supported".to_string()),
+                };
                 Ok(self.emit(InstructionKind::Call {
-                    func: func_val,
+                    func: func_name,
                     args: vec![input],
                 }))
             }
@@ -287,29 +371,170 @@ impl Default for LoweringContext {
     }
 }
 
-/// Lower an expression to a VIR module
+/// Lower declarations to a VIR module
+pub fn lower_decls_to_vir(decls: &[Decl]) -> Result<VirModule, String> {
+    let mut ctx = LoweringContext::new();
+    let mut has_main = false;
+
+    for decl in decls {
+        match decl {
+            Decl::Function { name, params, return_type, body, .. } => {
+                if name == "main" {
+                    has_main = true;
+                }
+
+                // Convert AST types to VIR types
+                let param_types: Vec<VirType> = params.iter()
+                    .map(|(_, ty)| ast_type_to_vir_type(ty))
+                    .collect();
+                let ret_type = ast_type_to_vir_type(return_type);
+
+                // Create parameter ValueIds and mapping
+                let mut param_values = Vec::new();
+                let mut param_map = HashMap::new();
+
+                for (param_name, _) in params {
+                    let param_value = ctx.module.fresh_value();
+                    param_values.push(param_value);
+                    param_map.insert(param_name.clone(), param_value);
+                }
+
+                // Save current context
+                let old_variables = ctx.variables.clone();
+                let old_instructions = ctx.current_instructions.clone();
+
+                // Set up parameter bindings in new scope
+                ctx.variables.extend(param_map);
+                ctx.current_instructions.clear();
+
+                // Lower the function body
+                let body_result = ctx.lower_expr(body)?;
+
+                // Create function signature
+                let signature = FunctionSignature::new(param_types, ret_type);
+
+                // Create basic block
+                let block_id = ctx.module.fresh_block();
+                let block = BasicBlock {
+                    id: block_id,
+                    instructions: std::mem::take(&mut ctx.current_instructions),
+                    terminator: Terminator::Return(body_result),
+                };
+
+                // Create function
+                let mut blocks = HashMap::new();
+                blocks.insert(block_id, block);
+
+                let func = VirFunction {
+                    name: name.clone(),
+                    params: param_values,
+                    blocks,
+                    entry_block: block_id,
+                    effect: vexl_core::Effect::Pure,
+                    signature,
+                };
+
+                // Add function to module
+                ctx.module.add_function(name.clone(), func);
+
+                // Restore context
+                ctx.variables = old_variables;
+                ctx.current_instructions = old_instructions;
+            }
+            Decl::Expr(expr) => {
+                // For expression declarations, create a main function
+                let result = ctx.lower_expr(expr)?;
+
+                let block_id = ctx.module.fresh_block();
+                let block = BasicBlock {
+                    id: block_id,
+                    instructions: std::mem::take(&mut ctx.current_instructions),
+                    terminator: Terminator::Return(result),
+                };
+
+                let func = VirFunction {
+                    name: "main".to_string(),
+                    params: vec![],
+                    blocks: HashMap::from([(block_id, block)]),
+                    entry_block: block_id,
+                    effect: vexl_core::Effect::Pure,
+                    signature: FunctionSignature::new(vec![], VirType::Int64),
+                };
+
+                ctx.module.add_function("main".to_string(), func);
+                has_main = true;
+            }
+        }
+    }
+
+    // If no main function was defined, create a default one that returns 0
+    if !has_main {
+        let block_id = ctx.module.fresh_block();
+        let block = BasicBlock {
+            id: block_id,
+            instructions: vec![],
+            terminator: Terminator::Return(ctx.emit(InstructionKind::ConstInt(0))),
+        };
+
+        let func = VirFunction {
+            name: "main".to_string(),
+            params: vec![],
+            blocks: HashMap::from([(block_id, block)]),
+            entry_block: block_id,
+            effect: vexl_core::Effect::Pure,
+            signature: FunctionSignature::new(vec![], VirType::Int64),
+        };
+
+        ctx.module.add_function("main".to_string(), func);
+    }
+
+    Ok(ctx.module)
+}
+
+/// Convert AST type to VIR type
+fn ast_type_to_vir_type(ast_type: &Type) -> VirType {
+    match ast_type {
+        Type::Int => VirType::Int64,
+        Type::Float => VirType::Float64,
+        Type::Bool => VirType::Int64, // Booleans as i64 for now
+        Type::String => VirType::Pointer, // Strings as pointers
+        Type::Vector { .. } => VirType::Pointer, // Vectors as pointers
+        Type::Function { .. } => VirType::Pointer, // Function pointers
+        Type::Named(name) => match name.as_str() {
+            "i64" => VirType::Int64,
+            "f64" => VirType::Float64,
+            "bool" => VirType::Int64,
+            "string" => VirType::Pointer,
+            _ => VirType::Pointer, // Unknown named types as pointers
+        }
+    }
+}
+
+/// Lower an expression to a VIR module (backward compatibility)
 pub fn lower_to_vir(expr: &Expr) -> Result<VirModule, String> {
     let mut ctx = LoweringContext::new();
     let result = ctx.lower_expr(expr)?;
-    
+
     // Create a main function that returns the result
+    // For JIT compatibility, main should return i32 in the VIR signature
     let block_id = ctx.module.fresh_block();
     let block = crate::BasicBlock {
         id: block_id,
         instructions: ctx.current_instructions,
         terminator: crate::Terminator::Return(result),
     };
-    
+
     let func = crate::VirFunction {
         name: "main".to_string(),
         params: vec![],
         blocks: std::collections::HashMap::from([(block_id, block)]),
         entry_block: block_id,
         effect: vexl_core::Effect::Pure,
+        signature: crate::FunctionSignature::new(vec![], crate::VirType::Int32), // Use i32 for JIT compatibility
     };
-    
+
     ctx.module.add_function("main".to_string(), func);
-    
+
     Ok(ctx.module)
 }
 

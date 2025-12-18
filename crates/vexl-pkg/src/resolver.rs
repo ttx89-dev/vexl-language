@@ -1,7 +1,7 @@
 
 use std::collections::HashMap;
 use anyhow::Result;
-use crate::manifest::PackageManifest;
+use crate::manifest::Manifest as PackageManifest;
 
 pub struct Resolver {
     // Cache of resolved packages

@@ -6,6 +6,11 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
+vexl-gpu = { path = "../vexl-gpu", optional = true }
 parking_lot.workspace = true
 dashmap.workspace = true
 anyhow.workspace = true
+
+[features]
+default = ["gpu"]
+gpu = ["vexl-gpu"]

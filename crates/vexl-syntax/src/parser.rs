@@ -4,16 +4,36 @@ use chumsky::prelude::*;
 use crate::ast::*;
 use crate::lexer::Token;
 
-/// Parse a VEXL source string into an expression
-pub fn parse(source: &str) -> Result<Expr, Vec<Simple<Token>>> {
+/// Parse a VEXL source string into declarations
+pub fn parse(source: &str) -> Result<Vec<Decl>, Vec<Simple<Token>>> {
     use logos::Logos;
-    
+
     // Tokenize the source
     let tokens: Vec<Token> = Token::lexer(source)
         .map(|tok| tok.unwrap_or(Token::Semicolon)) // Error recovery
         .collect();
-    
+
     // Parse the tokens into an AST
+    program_parser().parse(tokens)
+}
+
+/// Parse a VEXL source string for LSP, converting errors to strings
+pub fn parse_for_lsp(source: &str) -> Result<Vec<Decl>, String> {
+    parse(source).map_err(|errors| {
+        errors.iter()
+            .map(|e| format!("Parse error: {:?}", e))
+            .collect::<Vec<_>>()
+            .join("\n")
+    })
+}
+
+/// Backward compatibility: parse as expression if no declarations found
+pub fn parse_expr(source: &str) -> Result<Expr, Vec<Simple<Token>>> {
+    use logos::Logos;
+    let tokens: Vec<Token> = Token::lexer(source)
+        .map(|tok| tok.unwrap_or(Token::Semicolon))
+        .collect();
+    
     parser().parse(tokens)
 }
 
@@ -279,13 +299,75 @@ fn parser() -> impl Parser<Token, Expr, Error = Simple<Token>> {
     })
 }
 
+/// Program parser that handles top-level declarations
+fn program_parser() -> impl Parser<Token, Vec<Decl>, Error = Simple<Token>> {
+    let span = Span { start: 0, end: 0 };
+
+    // Type parser for function signatures
+    let type_parser = recursive(|ty| {
+        choice((
+            select! { Token::Ident(s) => match s.as_str() {
+                "i64" => Type::Int,
+                "f64" => Type::Float,
+                "bool" => Type::Bool,
+                "string" => Type::String,
+                other => Type::Named(other.to_string()),
+            }},
+            // Function type: (T1, T2) -> T3
+            ty.clone()
+                .separated_by(just(Token::Comma))
+                .allow_trailing()
+                .delimited_by(just(Token::LParen), just(Token::RParen))
+                .then_ignore(just(Token::Minus))
+                .then_ignore(just(Token::Gt))
+                .then(ty.clone())
+                .map(|(params, ret)| Type::Function {
+                    params,
+                    ret: Box::new(ret),
+                }),
+        ))
+    });
+
+    // Function declaration: fn name(param: Type, ...) -> ReturnType { body }
+    let function_decl = just(Token::Fn)
+        .ignore_then(select! { Token::Ident(name) => name })
+        .then(
+            select! { Token::Ident(param_name) => param_name }
+                .then_ignore(just(Token::Colon))
+                .then(type_parser.clone())
+                .separated_by(just(Token::Comma))
+                .allow_trailing()
+                .delimited_by(just(Token::LParen), just(Token::RParen))
+        )
+        .then_ignore(just(Token::Minus))
+        .then_ignore(just(Token::Gt))
+        .then(type_parser)
+        .then(parser().delimited_by(just(Token::LBrace), just(Token::RBrace)))
+        .map(move |(((name, params), return_type), body)| Decl::Function {
+            name,
+            params,
+            return_type,
+            body,
+            span,
+        });
+
+    // Expression as declaration
+    let expr_decl = parser().map(move |expr| Decl::Expr(expr));
+
+    // Program is a sequence of declarations
+    function_decl
+        .or(expr_decl)
+        .repeated()
+        .at_least(1)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_parse_int() {
-        let result = parse("42");
+        let result = parse_expr("42");
         assert!(result.is_ok());
         if let Ok(Expr::Int(n, _)) = result {
             assert_eq!(n, 42);
@@ -296,7 +378,7 @@ mod tests {
     
     #[test]
     fn test_parse_float() {
-        let result = parse("3.14");
+        let result = parse_expr("3.14");
         assert!(result.is_ok());
         if let Ok(Expr::Float(f, _)) = result {
             assert!((f - 3.14).abs() < 0.001);
@@ -304,10 +386,10 @@ mod tests {
             panic!("Expected Float expression");
         }
     }
-    
+
     #[test]
     fn test_parse_string() {
-        let result = parse("\"hello\"");
+        let result = parse_expr("\"hello\"");
         assert!(result.is_ok());
         if let Ok(Expr::String(s, _)) = result {
             assert_eq!(s, "hello");
@@ -315,10 +397,10 @@ mod tests {
             panic!("Expected String expression");
         }
     }
-    
+
     #[test]
     fn test_parse_bool_true() {
-        let result = parse("true");
+        let result = parse_expr("true");
         assert!(result.is_ok());
         if let Ok(Expr::Bool(b, _)) = result {
             assert_eq!(b, true);
@@ -329,7 +411,7 @@ mod tests {
 
     #[test]
     fn test_parse_bool_false() {
-        let result = parse("false");
+        let result = parse_expr("false");
         assert!(result.is_ok());
         if let Ok(Expr::Bool(b, _)) = result {
             assert_eq!(b, false);
@@ -340,7 +422,7 @@ mod tests {
 
     #[test]
     fn test_parse_ident() {
-        let result = parse("foo");
+        let result = parse_expr("foo");
         assert!(result.is_ok());
         if let Ok(Expr::Ident(s, _)) = result {
             assert_eq!(s, "foo");
@@ -351,7 +433,7 @@ mod tests {
 
     #[test]
     fn test_parse_vector() {
-        let result = parse("[1, 2, 3]");
+        let result = parse_expr("[1, 2, 3]");
         assert!(result.is_ok());
         if let Ok(Expr::Vector(elements, _)) = result {
             assert_eq!(elements.len(), 3);
@@ -359,10 +441,10 @@ mod tests {
             panic!("Expected Vector expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_binary_op() {
-        let result = parse("1 + 2");
+        let result = parse_expr("1 + 2");
         assert!(result.is_ok());
         if let Ok(Expr::BinOp { op, .. }) = result {
             assert_eq!(op, BinOpKind::Add);
@@ -370,10 +452,10 @@ mod tests {
             panic!("Expected BinOp expression");
         }
     }
-    
+
     #[test]
     fn test_parse_multiplication() {
-        let result = parse("3 * 4");
+        let result = parse_expr("3 * 4");
         assert!(result.is_ok());
         if let Ok(Expr::BinOp { op, .. }) = result {
             assert_eq!(op, BinOpKind::Mul);
@@ -381,10 +463,10 @@ mod tests {
             panic!("Expected BinOp expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_comparison() {
-        let result = parse("x == 5");
+        let result = parse_expr("x == 5");
         assert!(result.is_ok());
         if let Ok(Expr::BinOp { op, .. }) = result {
             assert_eq!(op, BinOpKind::Eq);
@@ -392,10 +474,10 @@ mod tests {
             panic!("Expected BinOp expression");
         }
     }
-    
+
     #[test]
     fn test_parse_pipeline() {
-        let result = parse("data |> map |> filter");
+        let result = parse_expr("data |> map |> filter");
         assert!(result.is_ok());
         if let Ok(Expr::Pipeline { stages, .. }) = result {
             assert_eq!(stages.len(), 3);
@@ -403,12 +485,13 @@ mod tests {
             panic!("Expected Pipeline expression");
         }
     }
-    
+
     // ===== NEW TESTS =====
-    
+
     #[test]
     fn test_parse_let_binding() {
-        let result = parse("let x = 5 x");
+        let result = parse_expr("let x = 5 in x");
+        println!("Let binding result: {:?}", result);
         assert!(result.is_ok());
         if let Ok(Expr::Let { name, .. }) = result {
             assert_eq!(name, "x");
@@ -416,10 +499,10 @@ mod tests {
             panic!("Expected Let expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_lambda_pipe() {
-        let result = parse("|x| x + 1");
+        let result = parse_expr("|x| x + 1");
         assert!(result.is_ok());
         if let Ok(Expr::Lambda { params, .. }) = result {
             assert_eq!(params.len(), 1);
@@ -428,10 +511,10 @@ mod tests {
             panic!("Expected Lambda expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_lambda_arrow() {
-        let result = parse("(x, y) => x + y");
+        let result = parse_expr("(x, y) => x + y");
         assert!(result.is_ok());
         if let Ok(Expr::Lambda { params, .. }) = result {
             assert_eq!(params.len(), 2);
@@ -441,10 +524,10 @@ mod tests {
             panic!("Expected Lambda expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_if_with_else() {
-        let result = parse("if x y else z");
+        let result = parse_expr("if x y else z");
         assert!(result.is_ok());
         if let Ok(Expr::If { else_branch, .. }) = result {
             assert!(else_branch.is_some());
@@ -452,31 +535,31 @@ mod tests {
             panic!("Expected If expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_if_without_else() {
-        let result = parse("if cond then_expr");
+        let result = parse_expr("if cond then_expr");
         assert!(result.is_ok());
         matches!(result.unwrap(), Expr::If { .. });
     }
-    
+
     #[test]
     fn test_parse_range() {
-        let result = parse("[0..10]");
+        let result = parse_expr("[0..10]");
         assert!(result.is_ok());
         matches!(result.unwrap(), Expr::Range(_, _, _));
     }
-    
+
     #[test]
     fn test_parse_infinite_range() {
-        let result = parse("[5..]");
+        let result = parse_expr("[5..]");
         assert!(result.is_ok());
         matches!(result.unwrap(), Expr::InfiniteRange(_, _));
     }
-    
+
     #[test]
     fn test_parse_fix() {
-        let result = parse("fix f => f");
+        let result = parse_expr("fix f => f");
         assert!(result.is_ok());
         if let Ok(Expr::Fix { name, .. }) = result {
             assert_eq!(name, "f");
@@ -484,10 +567,10 @@ mod tests {
             panic!("Expected Fix expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_function_application() {
-        let result = parse("f(x, y)");
+        let result = parse_expr("f(x, y)");
         assert!(result.is_ok());
         if let Ok(Expr::App { args, .. }) = result {
             assert_eq!(args.len(), 2);
@@ -495,10 +578,10 @@ mod tests {
             panic!("Expected App expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_matrix_multiply() {
-        let result = parse("a @ b");
+        let result = parse_expr("a @ b");
         assert!(result.is_ok());
         if let Ok(Expr::BinOp { op, .. }) = result {
             assert_eq!(op, BinOpKind::MatMul);
@@ -506,10 +589,10 @@ mod tests {
             panic!("Expected BinOp expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_comprehension() {
-        let result = parse("[x | x <- xs]");
+        let result = parse_expr("[x | x <- xs]");
         assert!(result.is_ok());
         if let Ok(Expr::Comprehension { bindings, .. }) = result {
             assert_eq!(bindings.len(), 1);
@@ -518,10 +601,10 @@ mod tests {
             panic!("Expected Comprehension expression but got {:?}", result);
         }
     }
-    
+
     #[test]
     fn test_parse_comprehension_with_filter() {
-        let result = parse("[x * 2 | x <- nums, x > 0]");
+        let result = parse_expr("[x * 2 | x <- nums, x > 0]");
         assert!(result.is_ok());
         if let Ok(Expr::Comprehension { bindings, filter, .. }) = result {
             assert_eq!(bindings.len(), 1);

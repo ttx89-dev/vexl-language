@@ -126,7 +126,7 @@ fn test_vector_operations() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test vector map
     let input = vec![1.0f32, 2.0, 3.0, 4.0, 5.0];
-    let mapped = gpu_ops.map_vector(&input, 3.0)?;
+    let mapped = gpu_ops.map_vector(&input, |x| x * 3.0)?;
     let expected_mapped = vec![3.0f32, 6.0, 9.0, 12.0, 15.0];
 
     if mapped != expected_mapped {

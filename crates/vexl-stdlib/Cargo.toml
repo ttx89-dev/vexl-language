@@ -7,3 +7,5 @@ edition = "2021"
 vexl-core = { path = "../vexl-core" }
 vexl-runtime = { path = "../vexl-runtime" }
 anyhow = "1.0"
+regex = "1.10"
+tempfile = "3.8"

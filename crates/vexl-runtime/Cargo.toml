@@ -5,9 +5,16 @@ edition = "2021"
 
 [dependencies]
 vexl-core = { path = "../vexl-core" }
-vexl-gpu = { path = "../vexl-gpu" }
+vexl-gpu = { path = "../vexl-gpu", optional = true }
+vexl-codegen = { path = "../vexl-codegen" }
+vexl-ir = { path = "../vexl-ir" }
+inkwell = { version = "0.4", features = ["llvm14-0", "target-x86", "target-aarch64"], default-features = false }
 parking_lot = "0.12"
 lazy_static = "1.4"
 log = "0.4"
 anyhow = "1.0"
 crossbeam-deque = "0.8"
+
+[features]
+default = ["gpu"]
+gpu = ["vexl-gpu"]

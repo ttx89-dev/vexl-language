@@ -8,6 +8,7 @@ anyhow = "1.0"
 log = "0.4"
 rayon = { workspace = true }
 rand = "0.8"
+bytemuck = "1.14"
 # GPU backend dependencies
 cudarc = { workspace = true, optional = true }
 opencl3 = { workspace = true, optional = true }

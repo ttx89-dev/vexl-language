@@ -1,0 +1,20 @@
+[package]
+name = "vexl-storage"
+version = "0.1.0"
+edition = "2021"
+description = "Fractal storage system for VEXL - infinite logical storage through generators"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+vexl-core = { path = "../vexl-core" }
+vexl-serialize = { path = "../vexl-serialize" }
+lz4 = "1.28"
+zstd = "0.13"
+serde = { version = "1.0", features = ["derive"] }
+parking_lot = "0.12"
+crossbeam-channel = "0.5"
+thiserror = "2.0"
+
+[dev-dependencies]
+tempfile = "3.8"
+proptest = "1.4"

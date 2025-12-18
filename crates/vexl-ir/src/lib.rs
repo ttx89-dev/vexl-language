@@ -1,5 +1,5 @@
 //! VEXL Intermediate Representation (VIR)
-//! 
+//!
 //! VIR is a Single Static Assignment (SSA) form IR that enables optimizations
 //! before lowering to LLVM IR. It preserves VEXL's dimensional and effect information.
 
@@ -8,6 +8,40 @@ use std::collections::HashMap;
 
 pub mod lower;
 pub mod optimize;
+pub mod passes;
+
+/// VIR type system for function signatures and values
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum VirType {
+    /// 32-bit signed integer (for JIT main function compatibility)
+    Int32,
+    /// 64-bit signed integer
+    Int64,
+    /// 64-bit floating point
+    Float64,
+    /// Pointer to arbitrary data
+    Pointer,
+    /// Vector of elements (homogeneous)
+    Vector { element_type: Box<VirType>, dimension: usize },
+    /// Void type (no value)
+    Void,
+}
+
+/// Function signature containing parameter types and return type
+#[derive(Debug, Clone)]
+pub struct FunctionSignature {
+    pub param_types: Vec<VirType>,
+    pub return_type: VirType,
+}
+
+impl FunctionSignature {
+    pub fn new(param_types: Vec<VirType>, return_type: VirType) -> Self {
+        Self {
+            param_types,
+            return_type,
+        }
+    }
+}
 
 /// VIR instruction identifier (SSA value)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -25,6 +59,7 @@ pub struct VirFunction {
     pub blocks: HashMap<BlockId, BasicBlock>,
     pub entry_block: BlockId,
     pub effect: Effect,
+    pub signature: FunctionSignature,
 }
 
 /// Basic block in SSA form
@@ -39,6 +74,7 @@ pub struct BasicBlock {
 #[derive(Debug, Clone)]
 pub struct Instruction {
     pub result: ValueId,
+    pub result_type: Option<VirType>,
     pub kind: InstructionKind,
 }
 
@@ -86,7 +122,7 @@ pub enum InstructionKind {
     
     // Function call
     Call {
-        func: ValueId,
+        func: String,
         args: Vec<ValueId>,
     },
 
@@ -208,15 +244,16 @@ mod tests {
     fn test_add_function() {
         let mut module = VirModule::new();
         let entry = module.fresh_block();
-        
+
         let func = VirFunction {
             name: "test".to_string(),
             params: vec![],
             blocks: HashMap::new(),
             entry_block: entry,
             effect: Effect::Pure,
+   signature: FunctionSignature::new(vec![], VirType::Void),
         };
-        
+
         module.add_function("test".to_string(), func);
         assert!(module.functions.contains_key("test"));
     }

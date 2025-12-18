@@ -3,6 +3,9 @@
 use crate::{VirModule, VirFunction, Instruction, InstructionKind, ValueId};
 use std::collections::{HashMap, HashSet};
 
+// Import optimization passes
+use crate::passes;
+
 /// Constant folding optimization
 /// Evaluates constant expressions at compile time
 pub fn constant_fold(module: &mut VirModule) {
@@ -27,7 +30,7 @@ fn constant_fold_function(func: &mut VirFunction) {
                         ConstValue::String(ref s) => InstructionKind::ConstString(s.clone()),
                     };
                     constants.insert(inst.result, const_val);
-                    new_instructions.push(Instruction {
+                    new_instructions.push(Instruction { result_type: None, 
                         result: inst.result,
                         kind: new_kind,
                     });
@@ -180,8 +183,8 @@ fn mark_instruction_uses(kind: &InstructionKind, used: &mut HashSet<ValueId>) {
                 used.insert(*arg);
             }
         }
-        InstructionKind::Call { func, args } => {
-            used.insert(*func);
+        InstructionKind::Call { args, .. } => {
+            // Function names are not values that can be "used" in the SSA sense
             for arg in args {
                 used.insert(*arg);
             }
@@ -219,10 +222,74 @@ fn has_side_effects(kind: &InstructionKind) -> bool {
 
 /// Run all optimization passes
 pub fn optimize(module: &mut VirModule) {
-    // Run passes multiple times until fixpoint
-    for _ in 0..3 {
+    // Run optimization passes in order
+    // Phase 1: Early optimizations (constant folding, inlining)
+    for _ in 0..2 {
+        constant_fold(module);
+        passes::inline::inline_functions(module);
+        eliminate_dead_code(module);
+    }
+
+    // Phase 2: Loop optimizations
+    for func in module.functions.values_mut() {
+        passes::loop_opt::optimize_loops(func);
+    }
+
+    // Phase 3: Memory layout optimizations
+    passes::memory_layout::optimize_memory_layout(module);
+
+    // Phase 4: Vectorization
+    passes::vectorize::vectorize_module(module, 8); // Default to AVX2 width
+
+    // Phase 5: Final cleanup
+    for _ in 0..2 {
         constant_fold(module);
         eliminate_dead_code(module);
+    }
+}
+
+/// Optimization levels for different compilation scenarios
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum OptimizationLevel {
+    /// No optimizations
+    O0,
+    /// Basic optimizations
+    O1,
+    /// Standard optimizations (default)
+    O2,
+    /// Aggressive optimizations
+    O3,
+}
+
+/// Run optimizations with specified level
+pub fn optimize_with_level(module: &mut VirModule, level: OptimizationLevel) {
+    match level {
+        OptimizationLevel::O0 => {
+            // No optimizations
+        }
+        OptimizationLevel::O1 => {
+            // Basic optimizations only
+            for _ in 0..2 {
+                constant_fold(module);
+                eliminate_dead_code(module);
+            }
+        }
+        OptimizationLevel::O2 => {
+            // Standard optimizations
+            optimize(module);
+        }
+        OptimizationLevel::O3 => {
+            // Aggressive optimizations
+            // Run standard optimizations multiple times
+            for _ in 0..2 {
+                optimize(module);
+            }
+
+            // Additional aggressive passes
+            for func in module.functions.values_mut() {
+                passes::loop_opt::loop_unrolling(func, 8); // More aggressive unrolling
+            }
+        }
     }
 }
 
@@ -244,15 +311,15 @@ mod tests {
         let mut block = BasicBlock {
             id: block_id,
             instructions: vec![
-                Instruction {
+                Instruction { result_type: None, 
                     result: v1,
                     kind: InstructionKind::ConstInt(1),
                 },
-                Instruction {
+                Instruction { result_type: None, 
                     result: v2,
                     kind: InstructionKind::ConstInt(2),
                 },
-                Instruction {
+                Instruction { result_type: None, 
                     result: v3,
                     kind: InstructionKind::Add(v1, v2),
                 },
@@ -266,6 +333,7 @@ mod tests {
             blocks: HashMap::new(),
             entry_block: block_id,
             effect: vexl_core::Effect::Pure,
+            signature: crate::FunctionSignature::new(vec![], crate::VirType::Void),
         };
         
         func.blocks.insert(block_id, block);
@@ -295,15 +363,15 @@ mod tests {
         let block = BasicBlock {
             id: block_id,
             instructions: vec![
-                Instruction {
+                Instruction { result_type: None, 
                     result: v1,
                     kind: InstructionKind::ConstInt(1),
                 },
-                Instruction {
+                Instruction { result_type: None, 
                     result: v2,  // This should be eliminated
                     kind: InstructionKind::ConstInt(2),
                 },
-                Instruction {
+                Instruction { result_type: None, 
                     result: v3,
                     kind: InstructionKind::Add(v1, v1),
                 },
@@ -317,6 +385,7 @@ mod tests {
             blocks: HashMap::from([(block_id, block)]),
             entry_block: block_id,
             effect: vexl_core::Effect::Pure,
+            signature: crate::FunctionSignature::new(vec![], crate::VirType::Void),
         };
         
         eliminate_dead_code_function(&mut func);

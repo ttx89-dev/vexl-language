@@ -1,0 +1,20 @@
+//! RUNTIME FUNCTION CALLS DEMO
+//! Demonstrates calling runtime functions with proper signatures
+//! This tests the FFI bridge and symbol resolution
+
+fn main() -> i64 {
+    // Test print_int function (runtime call)
+    print_int(42);
+
+    // Test vector operations (runtime calls)
+    let vec = [1, 2, 3, 4, 5];
+    let sum = vec_sum(vec);
+    print_int(sum);  // Should print 15
+
+    // Test math functions (runtime calls)
+    let sin_val = sin(3.14159 / 2.0);  // Should be ~1.0
+    print_float(sin_val);
+
+    // Return success code
+    0
+}

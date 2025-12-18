@@ -14,10 +14,11 @@ pub mod memory;
 pub mod effect;
 pub mod parallel;
 
-pub use vector::{
-    Vector1, Vector2, VectorError, VectorResult,
-    ComputeConfig, set_compute_config
-};
+// Note: Vector types not yet implemented - placeholder for future implementation
+// pub use vector::{
+//     Vector1, Vector2, VectorError, VectorResult,
+//     ComputeConfig, set_compute_config
+// };
 pub use generator::{
     Generator, TieredCache, CacheStats, CachedGenerator
 };

@@ -74,7 +74,7 @@ let fib_10 = fibonacci |> take(10)       // [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Build VEXL
-git clone https://github.com/your-org/vexl-language.git
+git clone https://github.com/ttx89-dev/vexl-language.git
 cd vexl-language
 cargo build --release
 

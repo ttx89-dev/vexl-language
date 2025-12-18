@@ -27,6 +27,11 @@ pub struct Vector {
 }
 
 impl Vector {
+    /// Create a Vector from a raw pointer (consumes the pointer)
+    pub unsafe fn from_raw(ptr: *mut Vector) -> Vector {
+        *Box::from_raw(ptr)
+    }
+
     /// Create a new vector from raw parts (called from LLVM)
     pub unsafe fn from_raw_parts(
         type_tag: u64,
@@ -58,7 +63,7 @@ impl Vector {
         Box::into_raw(Box::new(vec))
     }
 
-    /// Get element at index (i64 elements only for now)
+    /// Get element at index (i64 elements)
     pub unsafe fn get_i64(&self, index: u64) -> i64 {
         let header = self.header.as_ref();
         if index >= header.total_size {
@@ -69,7 +74,7 @@ impl Vector {
         *elem_ptr
     }
 
-    /// Set element at index (i64 elements only for now)
+    /// Set element at index (i64 elements)
     pub unsafe fn set_i64(&mut self, index: u64, value: i64) {
         let header = self.header.as_ref();
         if index >= header.total_size {
@@ -77,6 +82,50 @@ impl Vector {
         }
 
         let elem_ptr = header.data_ptr.add((index * 8) as usize) as *mut i64;
+        *elem_ptr = value;
+    }
+
+    /// Get element at index (f64 elements)
+    pub unsafe fn get_f64(&self, index: u64) -> f64 {
+        let header = self.header.as_ref();
+        if index >= header.total_size {
+            return 0.0; // Error case
+        }
+
+        let elem_ptr = header.data_ptr.add((index * 8) as usize) as *const f64;
+        *elem_ptr
+    }
+
+    /// Set element at index (f64 elements)
+    pub unsafe fn set_f64(&mut self, index: u64, value: f64) {
+        let header = self.header.as_ref();
+        if index >= header.total_size {
+            return; // Error case
+        }
+
+        let elem_ptr = header.data_ptr.add((index * 8) as usize) as *mut f64;
+        *elem_ptr = value;
+    }
+
+    /// Get element at index (bool elements)
+    pub unsafe fn get_bool(&self, index: u64) -> bool {
+        let header = self.header.as_ref();
+        if index >= header.total_size {
+            return false; // Error case
+        }
+
+        let elem_ptr = header.data_ptr.add(index as usize) as *const bool;
+        *elem_ptr
+    }
+
+    /// Set element at index (bool elements)
+    pub unsafe fn set_bool(&mut self, index: u64, value: bool) {
+        let header = self.header.as_ref();
+        if index >= header.total_size {
+            return; // Error case
+        }
+
+        let elem_ptr = header.data_ptr.add(index as usize) as *mut bool;
         *elem_ptr = value;
     }
 
@@ -328,6 +377,259 @@ pub extern "C" fn vexl_vec_mul_scalar_i64(vec: *mut Vector, scalar: i64) -> *mut
     for i in 0..len {
         let val = vexl_vec_get_i64(vec, i);
         vexl_vec_set_i64(result, i, val * scalar);
+    }
+
+    result
+}
+
+/// Allocate a new vector with f64 elements
+#[no_mangle]
+pub extern "C" fn vexl_vec_alloc_f64(count: u64) -> *mut Vector {
+    if count == 0 {
+        return std::ptr::null_mut();
+    }
+
+    // Allocate data array
+    let data_layout = Layout::from_size_align((count * 8) as usize, 8).unwrap();
+    let data_ptr = unsafe { alloc(data_layout) };
+
+    // Initialize to zeros
+    unsafe {
+        std::ptr::write_bytes(data_ptr, 0, (count * 8) as usize);
+    }
+
+    // Type tag: 1 = f64
+    unsafe { Vector::from_raw_parts(1, 1, count, data_ptr) }
+}
+
+/// Get f64 element from vector
+#[no_mangle]
+pub extern "C" fn vexl_vec_get_f64(vec: *mut Vector, index: u64) -> f64 {
+    if vec.is_null() {
+        return 0.0;
+    }
+
+    let vector = unsafe { &*vec };
+    unsafe { vector.get_f64(index) }
+}
+
+/// Set f64 element in vector
+#[no_mangle]
+pub extern "C" fn vexl_vec_set_f64(vec: *mut Vector, index: u64, value: f64) {
+    if vec.is_null() {
+        return;
+    }
+
+    let vector = unsafe { &mut *vec };
+    unsafe { vector.set_f64(index, value) };
+}
+
+/// Allocate a new vector with bool elements
+#[no_mangle]
+pub extern "C" fn vexl_vec_alloc_bool(count: u64) -> *mut Vector {
+    if count == 0 {
+        return std::ptr::null_mut();
+    }
+
+    // Allocate data array
+    let data_layout = Layout::from_size_align(count as usize, 1).unwrap();
+    let data_ptr = unsafe { alloc(data_layout) };
+
+    // Initialize to false
+    unsafe {
+        std::ptr::write_bytes(data_ptr, 0, count as usize);
+    }
+
+    // Type tag: 2 = bool
+    unsafe { Vector::from_raw_parts(2, 1, count, data_ptr) }
+}
+
+/// Get bool element from vector
+#[no_mangle]
+pub extern "C" fn vexl_vec_get_bool(vec: *mut Vector, index: u64) -> bool {
+    if vec.is_null() {
+        return false;
+    }
+
+    let vector = unsafe { &*vec };
+    unsafe { vector.get_bool(index) }
+}
+
+/// Set bool element in vector
+#[no_mangle]
+pub extern "C" fn vexl_vec_set_bool(vec: *mut Vector, index: u64, value: bool) {
+    if vec.is_null() {
+        return;
+    }
+
+    let vector = unsafe { &mut *vec };
+    unsafe { vector.set_bool(index, value) };
+}
+
+/// Vector dot product (i64)
+#[no_mangle]
+pub extern "C" fn vexl_vec_dot_i64(a: *mut Vector, b: *mut Vector) -> i64 {
+    if a.is_null() || b.is_null() {
+        return 0;
+    }
+
+    let vec_a = unsafe { &*a };
+    let vec_b = unsafe { &*b };
+
+    let len_a = vec_a.len();
+    let len_b = vec_b.len();
+
+    if len_a != len_b {
+        return 0; // Error: mismatched lengths
+    }
+
+    let mut result = 0i64;
+    for i in 0..len_a {
+        let val_a = vexl_vec_get_i64(a, i);
+        let val_b = vexl_vec_get_i64(b, i);
+        result += val_a * val_b;
+    }
+
+    result
+}
+
+/// Vector dot product (f64)
+#[no_mangle]
+pub extern "C" fn vexl_vec_dot_f64(a: *mut Vector, b: *mut Vector) -> f64 {
+    if a.is_null() || b.is_null() {
+        return 0.0;
+    }
+
+    let vec_a = unsafe { &*a };
+    let vec_b = unsafe { &*b };
+
+    let len_a = vec_a.len();
+    let len_b = vec_b.len();
+
+    if len_a != len_b {
+        return 0.0; // Error: mismatched lengths
+    }
+
+    let mut result = 0.0f64;
+    for i in 0..len_a {
+        let val_a = vexl_vec_get_f64(a, i);
+        let val_b = vexl_vec_get_f64(b, i);
+        result += val_a * val_b;
+    }
+
+    result
+}
+
+/// Matrix multiplication (simplified 2D case)
+/// Assumes vectors are stored in row-major order
+#[no_mangle]
+pub extern "C" fn vexl_mat_mul_i64(a: *mut Vector, b: *mut Vector, m: u64, n: u64, p: u64) -> *mut Vector {
+    if a.is_null() || b.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    // Result matrix is m x p
+    let result = vexl_vec_alloc_i64(m * p);
+    if result.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    // C[i][j] = sum_k A[i][k] * B[k][j]
+    for i in 0..m {
+        for j in 0..p {
+            let mut sum = 0i64;
+            for k in 0..n {
+                let a_val = vexl_vec_get_i64(a, i * n + k);
+                let b_val = vexl_vec_get_i64(b, k * p + j);
+                sum += a_val * b_val;
+            }
+            vexl_vec_set_i64(result, i * p + j, sum);
+        }
+    }
+
+    result
+}
+
+/// Matrix transpose (2D matrix)
+#[no_mangle]
+pub extern "C" fn vexl_mat_transpose_i64(vec: *mut Vector, rows: u64, cols: u64) -> *mut Vector {
+    if vec.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    // Result is cols x rows
+    let result = vexl_vec_alloc_i64(cols * rows);
+    if result.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    for i in 0..rows {
+        for j in 0..cols {
+            let val = vexl_vec_get_i64(vec, i * cols + j);
+            vexl_vec_set_i64(result, j * rows + i, val);
+        }
+    }
+
+    result
+}
+
+/// Vector element-wise multiplication
+#[no_mangle]
+pub extern "C" fn vexl_vec_mul_i64(a: *mut Vector, b: *mut Vector) -> *mut Vector {
+    if a.is_null() || b.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    let vec_a = unsafe { &*a };
+    let vec_b = unsafe { &*b };
+
+    let len_a = vec_a.len();
+    let len_b = vec_b.len();
+
+    if len_a != len_b {
+        return std::ptr::null_mut(); // Error: mismatched lengths
+    }
+
+    let result = vexl_vec_alloc_i64(len_a);
+    if result.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    for i in 0..len_a {
+        let val_a = vexl_vec_get_i64(a, i);
+        let val_b = vexl_vec_get_i64(b, i);
+        vexl_vec_set_i64(result, i, val_a * val_b);
+    }
+
+    result
+}
+
+/// Vector element-wise subtraction
+#[no_mangle]
+pub extern "C" fn vexl_vec_sub_i64(a: *mut Vector, b: *mut Vector) -> *mut Vector {
+    if a.is_null() || b.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    let vec_a = unsafe { &*a };
+    let vec_b = unsafe { &*b };
+
+    let len_a = vec_a.len();
+    let len_b = vec_b.len();
+
+    if len_a != len_b {
+        return std::ptr::null_mut(); // Error: mismatched lengths
+    }
+
+    let result = vexl_vec_alloc_i64(len_a);
+    if result.is_null() {
+        return std::ptr::null_mut();
+    }
+
+    for i in 0..len_a {
+        let val_a = vexl_vec_get_i64(a, i);
+        let val_b = vexl_vec_get_i64(b, i);
+        vexl_vec_set_i64(result, i, val_a - val_b);
     }
 
     result

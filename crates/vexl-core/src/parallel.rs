@@ -3,6 +3,8 @@
 //! This module provides functions for parallel execution
 //! that can be implemented by external crates like vexl-runtime.
 
+use std::sync::OnceLock;
+
 /// Trait for parallel runtime implementations
 pub trait ParallelRuntime: Send + Sync {
     /// Execute a parallel map operation
@@ -16,20 +18,16 @@ pub trait ParallelRuntime: Send + Sync {
 }
 
 // Global parallel runtime instance
-static mut PARALLEL_RUNTIME: Option<&'static dyn ParallelRuntime> = None;
+static PARALLEL_RUNTIME: OnceLock<&'static dyn ParallelRuntime> = OnceLock::new();
 
 /// Set the parallel runtime for VEXL operations
 pub fn set_parallel_runtime(runtime: &'static dyn ParallelRuntime) {
-    unsafe {
-        PARALLEL_RUNTIME = Some(runtime);
-    }
+    PARALLEL_RUNTIME.set(runtime).ok(); // Ignore if already set
 }
 
 /// Get the current parallel runtime
 pub fn get_parallel_runtime() -> Option<&'static dyn ParallelRuntime> {
-    unsafe {
-        PARALLEL_RUNTIME
-    }
+    PARALLEL_RUNTIME.get().copied()
 }
 
 /// Execute parallel map operation using the global runtime

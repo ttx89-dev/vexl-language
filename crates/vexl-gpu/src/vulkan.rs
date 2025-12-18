@@ -135,6 +135,14 @@ impl VulkanBackend {
 
 #[cfg(feature = "vulkan")]
 impl GpuBackend for VulkanBackend {
+    fn write_buffer(&self, _buffer: &GpuBuffer, _data: &[u8]) -> Result<()> {
+        Err(anyhow::anyhow!("Vulkan backend not fully implemented"))
+    }
+
+    fn read_buffer(&self, _buffer: &GpuBuffer, _data: &mut [u8]) -> Result<()> {
+        Err(anyhow::anyhow!("Vulkan backend not fully implemented"))
+    }
+
     fn name(&self) -> &str { "Vulkan" }
 
     fn allocate(&self, size: usize) -> Result<GpuBuffer> {

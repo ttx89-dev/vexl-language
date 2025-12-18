@@ -276,22 +276,44 @@ pub fn infer(expr: &Expr, env: &mut TypeEnv) -> Result<(InferredType, Vec<Constr
         
         Expr::If { cond, then_branch, else_branch, .. } => {
             let (cond_ty, mut constraints) = infer(cond, env)?;
-            
+
             // Condition must be Bool
             constraints.push(Constraint::Equal(cond_ty, InferredType::Bool));
-            
+
             let (then_ty, then_constraints) = infer(then_branch, env)?;
             constraints.extend(then_constraints);
-            
+
             if let Some(else_expr) = else_branch {
                 let (else_ty, else_constraints) = infer(else_expr, env)?;
                 constraints.extend(else_constraints);
-                
+
                 // Then and else must have same type
                 constraints.push(Constraint::Equal(then_ty.clone(), else_ty));
             }
-            
+
             Ok((then_ty, constraints))
+        }
+
+        Expr::Fix { name, body, .. } => {
+            // For fix f => e, we need to:
+            // 1. Create a fresh type variable for the fix expression
+            // 2. Bind f to this type in the environment
+            // 3. Infer the type of e
+            // 4. Constrain that the fix type equals e's type
+
+            let fix_ty = InferredType::Var(env.fresh_type_var());
+
+            // Bind the name to the fix type (for recursion)
+            env.insert(name.clone(), fix_ty.clone());
+
+            // Infer body type
+            let (body_ty, constraints) = infer(body, env)?;
+
+            // The fix expression has the same type as its body
+            let mut all_constraints = vec![Constraint::Equal(fix_ty.clone(), body_ty)];
+            all_constraints.extend(constraints);
+
+            Ok((fix_ty, all_constraints))
         }
         
         

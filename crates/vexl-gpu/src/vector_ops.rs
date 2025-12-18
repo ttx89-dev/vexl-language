@@ -2,286 +2,151 @@
 //!
 //! High-performance vector operations using GPU compute shaders.
 //! Automatically dispatches to GPU when beneficial, with CPU fallback.
+//!
+//! ## Future Enhancements (Phase 6.1)
+//!
+//! ### Advanced GPU Features
+//! - SPIR-V code generation pipeline
+//! - Enhanced Vulkan compute shaders
+//! - Multi-GPU support
+//! - GPU memory management optimization
+//! - Kernel fusion for complex operations
+//! - Dynamic kernel compilation
+//!
+//! ### Performance Optimizations
+//! - Memory coalescing strategies
+//! - Occupancy optimization
+//! - Asynchronous execution
+//! - GPU-CPU hybrid scheduling
+//! - Profile-guided kernel selection
 
-use crate::backend::{GpuBackend, GpuBuffer, GpuArg, ComputeKernel};
+use crate::backend::GpuBackend;
 use anyhow::Result;
 
-/// GPU vector operations interface
+/// GPU-accelerated vector operations
 pub struct GpuVectorOps {
     backend: Box<dyn GpuBackend>,
-    kernels: Vec<ComputeKernel>,
 }
 
 impl GpuVectorOps {
-    /// Create new GPU vector operations with the best available backend
+    /// Create new GPU vector operations with automatic backend selection
     pub fn new() -> Result<Self> {
         let backend = crate::init_best_backend();
-        let kernels = Self::create_kernels();
-
-        Ok(Self {
-            backend,
-            kernels,
-        })
+        Ok(Self { backend })
     }
 
-    /// Create GPU kernels for vector operations
-    fn create_kernels() -> Vec<ComputeKernel> {
-        vec![
-            // Vector addition kernel (SPIR-V/Vulkan compute shader)
-            ComputeKernel {
-                name: "vector_add".to_string(),
-                source: r#"
-                    #version 450
-                    layout(local_size_x = 256) in;
-
-                    layout(set = 0, binding = 0) buffer InputA { float data[]; } inputA;
-                    layout(set = 0, binding = 1) buffer InputB { float data[]; } inputB;
-                    layout(set = 0, binding = 2) buffer Output { float data[]; } output;
-
-                    void main() {
-                        uint idx = gl_GlobalInvocationID.x;
-                        if (idx < inputA.data.length()) {
-                            output.data[idx] = inputA.data[idx] + inputB.data[idx];
-                        }
-                    }
-                "#.to_string(),
-                entry_point: "main".to_string(),
-            },
-
-            // Vector multiplication kernel
-            ComputeKernel {
-                name: "vector_mul".to_string(),
-                source: r#"
-                    #version 450
-                    layout(local_size_x = 256) in;
-
-                    layout(set = 0, binding = 0) buffer InputA { float data[]; } inputA;
-                    layout(set = 0, binding = 1) buffer InputB { float data[]; } inputB;
-                    layout(set = 0, binding = 2) buffer Output { float data[]; } output;
-
-                    void main() {
-                        uint idx = gl_GlobalInvocationID.x;
-                        if (idx < inputA.data.length()) {
-                            output.data[idx] = inputA.data[idx] * inputB.data[idx];
-                        }
-                    }
-                "#.to_string(),
-                entry_point: "main".to_string(),
-            },
-
-            // Vector map kernel (with scalar parameter)
-            ComputeKernel {
-                name: "vector_map".to_string(),
-                source: r#"
-                    #version 450
-                    layout(local_size_x = 256) in;
-
-                    layout(set = 0, binding = 0) buffer Input { float data[]; } input;
-                    layout(set = 0, binding = 1) buffer Output { float data[]; } output;
-                    layout(push_constant) uniform PushConstants {
-                        float scalar;
-                    } pc;
-
-                    void main() {
-                        uint idx = gl_GlobalInvocationID.x;
-                        if (idx < input.data.length()) {
-                            output.data[idx] = input.data[idx] * pc.scalar;
-                        }
-                    }
-                "#.to_string(),
-                entry_point: "main".to_string(),
-            },
-
-            // Matrix multiplication kernel
-            ComputeKernel {
-                name: "matrix_mul".to_string(),
-                source: r#"
-                    #version 450
-                    layout(local_size_x = 16, local_size_y = 16) in;
-
-                    layout(set = 0, binding = 0) buffer MatrixA { float data[]; } matrixA;
-                    layout(set = 0, binding = 1) buffer MatrixB { float data[]; } matrixB;
-                    layout(set = 0, binding = 2) buffer Output { float data[]; } output;
-                    layout(push_constant) uniform PushConstants {
-                        uint widthA;
-                        uint widthB;
-                        uint heightA;
-                    } pc;
-
-                    void main() {
-                        uint row = gl_GlobalInvocationID.y;
-                        uint col = gl_GlobalInvocationID.x;
-
-                        if (row < pc.heightA && col < pc.widthB) {
-                            float sum = 0.0;
-                            for (uint k = 0; k < pc.widthA; k++) {
-                                sum += matrixA.data[row * pc.widthA + k] *
-                                       matrixB.data[k * pc.widthB + col];
-                            }
-                            output.data[row * pc.widthB + col] = sum;
-                        }
-                    }
-                "#.to_string(),
-                entry_point: "main".to_string(),
-            },
-        ]
+    /// Create GPU vector operations with specific backend
+    pub fn with_backend(backend: Box<dyn GpuBackend>) -> Self {
+        Self { backend }
     }
 
-    /// Check if GPU acceleration is beneficial for the given data size
-    pub fn should_use_gpu(&self, data_size: usize) -> bool {
-        // GPU acceleration is beneficial for large datasets
-        // Threshold depends on transfer overhead vs compute benefit
-        data_size >= 1024 // 1K elements minimum for GPU benefit
-    }
-
-    /// GPU-accelerated vector addition with CPU+GPU hybrid optimization
+    /// Vector addition: c[i] = a[i] + b[i]
     pub fn add_vectors(&self, a: &[f32], b: &[f32]) -> Result<Vec<f32>> {
-        assert_eq!(a.len(), b.len());
-
-        let len = a.len();
-
-        // Hybrid optimization: Use GPU for large arrays, CPU SIMD for medium, scalar for small
-        if len >= 10000 && self.is_gpu_available() {
-            // Large arrays: GPU acceleration
-            self.add_vectors_gpu(a, b)
-        } else if len >= 1000 {
-            // Medium arrays: CPU SIMD with parallel processing
-            self.add_vectors_cpu_simd_parallel(a, b)
-        } else {
-            // Small arrays: Simple CPU loop
-            Ok(a.iter().zip(b.iter()).map(|(x, y)| x + y).collect())
+        if a.len() != b.len() {
+            return Err(anyhow::anyhow!("Vector length mismatch: {} vs {}", a.len(), b.len()));
         }
-    }
-
-    /// GPU implementation of vector addition
-    fn add_vectors_gpu(&self, a: &[f32], b: &[f32]) -> Result<Vec<f32>> {
-        let kernel = self.kernels.iter().find(|k| k.name == "vector_add")
-            .ok_or_else(|| anyhow::anyhow!("Vector add kernel not found"))?;
 
         // Allocate GPU buffers
         let buffer_a = self.backend.allocate(a.len() * std::mem::size_of::<f32>())?;
         let buffer_b = self.backend.allocate(b.len() * std::mem::size_of::<f32>())?;
-        let buffer_out = self.backend.allocate(a.len() * std::mem::size_of::<f32>())?;
+        let buffer_c = self.backend.allocate(a.len() * std::mem::size_of::<f32>())?;
 
-        // Execute kernel
-        let args = vec![
-            GpuArg::Buffer(buffer_a.clone()),
-            GpuArg::Buffer(buffer_b.clone()),
-            GpuArg::Buffer(buffer_out.clone()),
-        ];
+        // Upload input data
+        self.backend.write_buffer(&buffer_a, bytemuck::cast_slice(a))?;
+        self.backend.write_buffer(&buffer_b, bytemuck::cast_slice(b))?;
 
-        self.backend.execute(kernel, &args)?;
+        // Create compute kernel for vector addition
+        let kernel_source = r#"
+            #version 450
+            layout(local_size_x = 256) in;
 
-        // Read back results
-        let result_bytes = self.backend.read_back(&buffer_out, a.len() * std::mem::size_of::<f32>())?;
-        let result: Vec<f32> = unsafe {
-            std::slice::from_raw_parts(
-                result_bytes.as_ptr() as *const f32,
-                a.len()
-            ).to_vec()
-        };
+            layout(binding = 0) buffer InputA { float data[]; } inputA;
+            layout(binding = 1) buffer InputB { float data[]; } inputB;
+            layout(binding = 2) buffer Output { float data[]; } output;
 
-        Ok(result)
-    }
-
-    /// CPU SIMD parallel implementation of vector addition
-    fn add_vectors_cpu_simd_parallel(&self, a: &[f32], b: &[f32]) -> Result<Vec<f32>> {
-        // Use CPU SIMD with parallel processing for medium-sized arrays
-        use rayon::prelude::*;
-
-        let mut result = vec![0.0f32; a.len()];
-        result.par_iter_mut().enumerate().for_each(|(i, out)| {
-            *out = a[i] + b[i];
-        });
-
-        Ok(result)
-    }
-
-    /// GPU-accelerated vector multiplication
-    pub fn mul_vectors(&self, a: &[f32], b: &[f32]) -> Result<Vec<f32>> {
-        assert_eq!(a.len(), b.len());
-
-        if !self.should_use_gpu(a.len()) {
-            return Ok(a.iter().zip(b.iter()).map(|(x, y)| x * y).collect());
-        }
-
-        let kernel = self.kernels.iter().find(|k| k.name == "vector_mul")
-            .ok_or_else(|| anyhow::anyhow!("Vector mul kernel not found"))?;
-
-        // Allocate GPU buffers
-        let buffer_a = self.backend.allocate(a.len() * std::mem::size_of::<f32>())?;
-        let buffer_b = self.backend.allocate(b.len() * std::mem::size_of::<f32>())?;
-        let buffer_out = self.backend.allocate(a.len() * std::mem::size_of::<f32>())?;
-
-        // Execute kernel
-        let args = vec![
-            GpuArg::Buffer(buffer_a.clone()),
-            GpuArg::Buffer(buffer_b.clone()),
-            GpuArg::Buffer(buffer_out.clone()),
-        ];
-
-        self.backend.execute(kernel, &args)?;
-
-        // Read back results
-        let result_bytes = self.backend.read_back(&buffer_out, a.len() * std::mem::size_of::<f32>())?;
-        let result: Vec<f32> = unsafe {
-            std::slice::from_raw_parts(
-                result_bytes.as_ptr() as *const f32,
-                a.len()
-            ).to_vec()
-        };
-
-        Ok(result)
-    }
-
-    /// GPU-accelerated vector map operation
-    pub fn map_vector(&self, input: &[f32], scalar: f32) -> Result<Vec<f32>> {
-        if !self.should_use_gpu(input.len()) {
-            return Ok(input.iter().map(|x| x * scalar).collect());
-        }
-
-        let kernel = self.kernels.iter().find(|k| k.name == "vector_map")
-            .ok_or_else(|| anyhow::anyhow!("Vector map kernel not found"))?;
-
-        // GPU execution with push constants
-        Ok(input.iter().map(|x| x * scalar).collect()) // Placeholder
-    }
-
-    /// GPU-accelerated matrix multiplication
-    pub fn mul_matrices(&self, a: &[f32], b: &[f32], rows_a: usize, cols_a: usize, cols_b: usize) -> Result<Vec<f32>> {
-        let total_elements = rows_a * cols_b;
-
-        if !self.should_use_gpu(total_elements) {
-            // CPU fallback matrix multiplication
-            let mut result = vec![0.0f32; total_elements];
-            for i in 0..rows_a {
-                for j in 0..cols_b {
-                    for k in 0..cols_a {
-                        let idx_a = i * cols_a + k;
-                        let idx_b = k * cols_b + j;
-                        let idx_result = i * cols_b + j;
-                        result[idx_result] += a[idx_a] * b[idx_b];
-                    }
+            void main() {
+                uint idx = gl_GlobalInvocationID.x;
+                if (idx < inputA.data.length()) {
+                    output.data[idx] = inputA.data[idx] + inputB.data[idx];
                 }
             }
-            return Ok(result);
+        "#;
+
+        let args = vec![
+            crate::GpuArg::Buffer(buffer_a.clone()),
+            crate::GpuArg::Buffer(buffer_b.clone()),
+            crate::GpuArg::Buffer(buffer_c.clone()),
+        ];
+
+        // Execute kernel
+        self.backend.execute_kernel("vector_add", kernel_source, &args, a.len() as u32)?;
+
+        // Read back result
+        let mut result_bytes = vec![0u8; a.len() * std::mem::size_of::<f32>()];
+        self.backend.read_buffer(&buffer_c, &mut result_bytes)?;
+        let result = bytemuck::cast_slice::<u8, f32>(&result_bytes).to_vec();
+
+        Ok(result)
+    }
+
+    /// Vector multiplication: c[i] = a[i] * b[i]
+    pub fn mul_vectors(&self, a: &[f32], b: &[f32]) -> Result<Vec<f32>> {
+        if a.len() != b.len() {
+            return Err(anyhow::anyhow!("Vector length mismatch: {} vs {}", a.len(), b.len()));
         }
 
-        let kernel = self.kernels.iter().find(|k| k.name == "matrix_mul")
-            .ok_or_else(|| anyhow::anyhow!("Matrix mul kernel not found"))?;
-
-        // GPU matrix multiplication
-        Ok(vec![0.0; total_elements]) // Placeholder - would implement full GPU matrix mul
+        // For now, use CPU fallback implementation
+        let mut result = Vec::with_capacity(a.len());
+        for i in 0..a.len() {
+            result.push(a[i] * b[i]);
+        }
+        Ok(result)
     }
 
-    /// Get backend information
+    /// Vector dot product: sum(a[i] * b[i])
+    pub fn dot_product(&self, a: &[f32], b: &[f32]) -> Result<f32> {
+        if a.len() != b.len() {
+            return Err(anyhow::anyhow!("Vector length mismatch: {} vs {}", a.len(), b.len()));
+        }
+
+        // For now, use CPU fallback implementation
+        let mut sum = 0.0f32;
+        for i in 0..a.len() {
+            sum += a[i] * b[i];
+        }
+        Ok(sum)
+    }
+
+    /// Map function over vector: c[i] = f(a[i])
+    pub fn map_vector<F>(&self, input: &[f32], f: F) -> Result<Vec<f32>>
+    where
+        F: Fn(f32) -> f32,
+    {
+        // For now, use CPU fallback implementation
+        let mut result = Vec::with_capacity(input.len());
+        for &x in input {
+            result.push(f(x));
+        }
+        Ok(result)
+    }
+
+    /// Scalar multiplication: c[i] = a[i] * scalar
+    pub fn scale_vector(&self, input: &[f32], scalar: f32) -> Result<Vec<f32>> {
+        self.map_vector(input, |x| x * scalar)
+    }
+
+    /// Vector reduction (sum): sum of all elements
+    pub fn sum_vector(&self, input: &[f32]) -> Result<f32> {
+        let mut sum = 0.0f32;
+        for &x in input {
+            sum += x;
+        }
+        Ok(sum)
+    }
+
+    /// Get backend name for debugging
     pub fn backend_name(&self) -> &str {
         self.backend.name()
-    }
-
-    /// Check if GPU is actually available
-    pub fn is_gpu_available(&self) -> bool {
-        self.backend.name() != "CpuFallback"
     }
 }
 
@@ -290,44 +155,63 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_gpu_vector_ops_creation() {
-        let ops = GpuVectorOps::new().unwrap();
-        println!("Using GPU backend: {}", ops.backend_name());
-        assert!(!ops.backend_name().is_empty());
-    }
-
-    #[test]
     fn test_vector_addition() {
         let ops = GpuVectorOps::new().unwrap();
-        let a = vec![1.0f32, 2.0, 3.0, 4.0, 5.0];
-        let b = vec![5.0f32, 4.0, 3.0, 2.0, 1.0];
-
+        let a = vec![1.0, 2.0, 3.0];
+        let b = vec![4.0, 5.0, 6.0];
         let result = ops.add_vectors(&a, &b).unwrap();
-        let expected = vec![6.0f32, 6.0, 6.0, 6.0, 6.0];
-
-        assert_eq!(result, expected);
+        assert_eq!(result, vec![5.0, 7.0, 9.0]);
     }
 
     #[test]
-    fn test_vector_map() {
+    fn test_vector_multiplication() {
         let ops = GpuVectorOps::new().unwrap();
-        let input = vec![1.0f32, 2.0, 3.0, 4.0, 5.0];
-        let scalar = 3.0f32;
-
-        let result = ops.map_vector(&input, scalar).unwrap();
-        let expected = vec![3.0f32, 6.0, 9.0, 12.0, 15.0];
-
-        assert_eq!(result, expected);
+        let a = vec![2.0, 3.0, 4.0];
+        let b = vec![3.0, 4.0, 5.0];
+        let result = ops.mul_vectors(&a, &b).unwrap();
+        assert_eq!(result, vec![6.0, 12.0, 20.0]);
     }
 
     #[test]
-    fn test_gpu_benefit_threshold() {
+    fn test_dot_product() {
         let ops = GpuVectorOps::new().unwrap();
+        let a = vec![1.0, 2.0, 3.0];
+        let b = vec![4.0, 5.0, 6.0];
+        let result = ops.dot_product(&a, &b).unwrap();
+        assert_eq!(result, 32.0); // 1*4 + 2*5 + 3*6 = 4 + 10 + 18 = 32
+    }
 
-        // Small data should not use GPU
-        assert!(!ops.should_use_gpu(100));
+    #[test]
+    fn test_map_vector() {
+        let ops = GpuVectorOps::new().unwrap();
+        let input = vec![1.0, 2.0, 3.0];
+        let result = ops.map_vector(&input, |x| x * 2.0).unwrap();
+        assert_eq!(result, vec![2.0, 4.0, 6.0]);
+    }
 
-        // Large data should use GPU (if available)
-        assert!(ops.should_use_gpu(2000));
+    #[test]
+    fn test_scale_vector() {
+        let ops = GpuVectorOps::new().unwrap();
+        let input = vec![1.0, 2.0, 3.0];
+        let result = ops.scale_vector(&input, 3.0).unwrap();
+        assert_eq!(result, vec![3.0, 6.0, 9.0]);
+    }
+
+    #[test]
+    fn test_sum_vector() {
+        let ops = GpuVectorOps::new().unwrap();
+        let input = vec![1.0, 2.0, 3.0, 4.0];
+        let result = ops.sum_vector(&input).unwrap();
+        assert_eq!(result, 10.0);
+    }
+
+    #[test]
+    fn test_length_mismatch_error() {
+        let ops = GpuVectorOps::new().unwrap();
+        let a = vec![1.0, 2.0];
+        let b = vec![1.0, 2.0, 3.0];
+        assert!(ops.add_vectors(&a, &b).is_err());
+        assert!(ops.mul_vectors(&a, &b).is_err());
+        assert!(ops.dot_product(&a, &b).is_err());
     }
 }

@@ -8,13 +8,13 @@ VEXL is a revolutionary vector programming language that treats **everything as 
 
 ## Quick Navigation
 
-### 🚀 Getting Started
+###  Getting Started
 - **[Installation Guide](getting-started/installation.md)** - Install VEXL on your system
 - **[Your First Program](getting-started/first-program.md)** - Write and run your first VEXL code
 - **[Basic Concepts](getting-started/basic-concepts.md)** - Understand VEXL fundamentals
 - **[Complete Tutorial](getting-started/tutorial.md)** - Step-by-step learning path
 
-### 📚 Language Guide
+###  Language Guide
 - **[Syntax Reference](language-guide/syntax-reference.md)** - Complete language grammar
 - **[Type System](language-guide/type-system.md)** - VEXL's universal vector types
 - **[Vector Operations](language-guide/vector-operations.md)** - Master vector manipulation
@@ -22,23 +22,23 @@ VEXL is a revolutionary vector programming language that treats **everything as 
 - **[Control Flow](language-guide/control-flow.md)** - Pattern matching and flow control
 - **[Effects](language-guide/effects.md)** - Pure, IO, and state functions
 
-### 📖 Reference
+###  Reference
 - **[Complete Syntax](reference/complete-syntax.md)** - Every language construct
 - **[Built-in Functions](reference/built-in-functions.md)** - Core function reference
 - **[Standard Library](reference/standard-library.md)** - Standard modules and utilities
 
-### 💡 Examples
+###  Examples
 - **[Beginner Examples](examples/beginner-examples.md)** - Simple, practical programs
 - **[Intermediate Examples](examples/intermediate-examples.md)** - More complex applications
 - **[Advanced Examples](examples/advanced-examples.md)** - Expert-level demonstrations
 
-### ⚡ Advanced Topics
+###  Advanced Topics
 - **[Performance](advanced/performance.md)** - Optimization techniques
 - **[Parallelism](advanced/parallelism.md)** - Concurrent programming
 - **[GPU Computing](advanced/gpu-computing.md)** - High-performance GPU acceleration with safety monitoring
 - **[Optimization](advanced/optimization.md)** - Advanced optimizations
 
-### 🔧 Development
+###  Development
 - **[Contributing](development/contributing.md)** - How to contribute to VEXL
 - **[Architecture](development/architecture.md)** - VEXL system design
 - **[Roadmap](development/roadmap.md)** - Future development plans
@@ -70,10 +70,10 @@ let matrix = [[1, 2], [3, 4]]       // Vector<Vector<Int, 1>, 1>
 
 ## Key Features
 
-### ✨ Universal Vector Type
+###  Universal Vector Type
 Everything from single numbers to complex data structures follows the same vector rules.
 
-### ⚡ Automatic Parallelism
+###  Automatic Parallelism
 The compiler automatically identifies parallelizable code and optimizes it for multiple cores.
 
 ### 📐 Shape Safety
@@ -82,7 +82,7 @@ VEXL prevents impossible operations at compile time through dimensional checking
 ### ∞ Infinite Storage
 Generators allow you to work with infinite datasets without using infinite memory.
 
-### 🎯 Effect Types
+###  Effect Types
 Clear separation between pure functions (parallelizable), IO functions, and state functions.
 
 ## Why VEXL?
@@ -157,7 +157,7 @@ Run it:
 
 ## Documentation Status
 
-### ✅ Complete
+###  Complete
 - [x] Installation and setup
 - [x] Basic concepts and tutorial
 - [x] Core syntax reference
@@ -174,7 +174,7 @@ Run it:
 - [ ] Standard library reference
 - [ ] Intermediate examples
 
-### 📋 Planned
+###  Planned
 - [ ] Advanced optimization guides
 - [ ] Contributing guidelines
 - [ ] Architecture documentation
@@ -205,6 +205,6 @@ VEXL is dual licensed under MIT or Apache-2.0.
 
 ---
 
-**Built with ❤️ using the OPTIBEST framework**
+**Built with ❤ using the OPTIBEST framework**
 
 *VEXL: Where mathematics meets programming*
