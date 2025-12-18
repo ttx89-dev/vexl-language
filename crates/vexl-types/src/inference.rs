@@ -81,13 +81,42 @@ impl TypeEnv {
             },
         );
 
-        // print: Int -> Unit (effect: io)
-        // For simplicity, we'll model Unit as Int for now
+        // print: T -> Unit (effect: io) - polymorphic print function
+        // For now, we'll keep the simple version, but we'll handle dispatch in lowering
+        let print_param_var = self.fresh_type_var();
         self.bindings.insert(
             "print".to_string(),
             InferredType::Function {
-                params: vec![InferredType::Int],
+                params: vec![InferredType::Var(print_param_var)], // Polymorphic parameter
                 ret: Box::new(InferredType::Int), // Unit
+                effect: Effect::Io,
+            },
+        );
+
+        // Add specific print functions for different types
+        self.bindings.insert(
+            "print_int".to_string(),
+            InferredType::Function {
+                params: vec![InferredType::Int],
+                ret: Box::new(InferredType::Int),
+                effect: Effect::Io,
+            },
+        );
+
+        self.bindings.insert(
+            "print_string".to_string(),
+            InferredType::Function {
+                params: vec![InferredType::String],
+                ret: Box::new(InferredType::Int),
+                effect: Effect::Io,
+            },
+        );
+
+        self.bindings.insert(
+            "print_float".to_string(),
+            InferredType::Function {
+                params: vec![InferredType::Float],
+                ret: Box::new(InferredType::Int),
                 effect: Effect::Io,
             },
         );
@@ -420,8 +449,19 @@ fn infer_binop(
     constraints.extend(right_constraints);
     
     match op {
-        BinOpKind::Add | BinOpKind::Sub => {
-            // Addition/subtraction: must have same type and dimension
+        BinOpKind::Add => {
+            // Addition: same type for most cases, but string concatenation is special
+            if let (InferredType::String, InferredType::String) = (&left_ty, &right_ty) {
+                // String concatenation: "hello" + "world" => String
+                Ok((InferredType::String, constraints))
+            } else {
+                // Regular addition: must have same type
+                constraints.push(Constraint::Equal(left_ty.clone(), right_ty));
+                Ok((left_ty, constraints))
+            }
+        }
+        BinOpKind::Sub => {
+            // Subtraction: must have same type and dimension
             constraints.push(Constraint::Equal(left_ty.clone(), right_ty));
             Ok((left_ty, constraints))
         }

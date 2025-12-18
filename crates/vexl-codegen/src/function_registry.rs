@@ -184,6 +184,39 @@ impl FunctionRegistry {
             false,
         );
 
+        self.register_runtime_function(
+            "vexl_print_float",
+            vec![VirType::Float64],
+            VirType::Void,
+            CallingConvention::C,
+            false,
+        );
+
+        self.register_runtime_function(
+            "vexl_print_string",
+            vec![VirType::Pointer, VirType::Int64],
+            VirType::Void,
+            CallingConvention::C,
+            false,
+        );
+
+        // String operations
+        self.register_runtime_function(
+            "vexl_string_concat",
+            vec![VirType::Pointer, VirType::Int64, VirType::Pointer, VirType::Int64],
+            VirType::Pointer,
+            CallingConvention::C,
+            false,
+        );
+
+        self.register_runtime_function(
+            "vexl_string_len",
+            vec![VirType::Pointer],
+            VirType::Int64,
+            CallingConvention::C,
+            false,
+        );
+
         // Parallel operations
         self.register_runtime_function(
             "vexl_vec_map_parallel",
@@ -292,6 +325,9 @@ mod tests {
         // Check that some runtime functions are registered
         assert!(registry.is_registered("vexl_vec_alloc_i64"));
         assert!(registry.is_registered("vexl_print_int"));
+        assert!(registry.is_registered("vexl_print_float"));
+        assert!(registry.is_registered("vexl_print_string"));
+        assert!(registry.is_registered("vexl_string_concat"));
         assert!(registry.is_registered("vexl_exit"));
 
         let names = registry.get_function_names();

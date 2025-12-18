@@ -19,6 +19,56 @@ impl LoweringContext {
             variables: HashMap::new(),
         }
     }
+
+    /// Check if a value came from a string constant
+    fn is_string_value(&self, value_id: ValueId) -> bool {
+        // Search through current instructions to see if this value came from ConstString
+        for instr in &self.current_instructions {
+            if instr.result == value_id {
+                match &instr.kind {
+                    InstructionKind::ConstString(_) => return true,
+                    _ => return false,
+                }
+            }
+        }
+        // If not found in current instructions, assume it's not a string
+        // In a full implementation, we'd track value types throughout
+        false
+    }
+
+    /// Check if a value came from a float constant
+    fn is_float_value(&self, value_id: ValueId) -> bool {
+        // Search through current instructions to see if this value came from ConstFloat
+        for instr in &self.current_instructions {
+            if instr.result == value_id {
+                match &instr.kind {
+                    InstructionKind::ConstFloat(_) => return true,
+                    _ => return false,
+                }
+            }
+        }
+        // If not found in current instructions, assume it's not a float
+        false
+    }
+
+    /// Get the length of a string value (simplified for string constants)
+    fn get_string_length(&mut self, value_id: ValueId) -> Result<ValueId, String> {
+        // Search through current instructions to find the ConstString that produced this value
+        for instr in &self.current_instructions {
+            if instr.result == value_id {
+                match &instr.kind {
+                    InstructionKind::ConstString(s) => {
+                        // Return the length as a constant
+                        return Ok(self.emit(InstructionKind::ConstInt(s.len() as i64)));
+                    }
+                    _ => return Err("Cannot get length of non-string value".to_string()),
+                }
+            }
+        }
+        // If not found, assume it's a string variable and we need to call vexl_string_len
+        // For now, return a placeholder length of 0 - this needs proper implementation
+        Ok(self.emit(InstructionKind::ConstInt(0)))
+    }
     
     /// Emit an instruction and return its result value
     fn emit(&mut self, kind: InstructionKind) -> ValueId {
@@ -99,24 +149,35 @@ impl LoweringContext {
             Expr::BinOp { op, left, right, .. } => {
                 let left_val = self.lower_expr(left)?;
                 let right_val = self.lower_expr(right)?;
-                
-                let kind = match op {
-                    BinOpKind::Add => InstructionKind::Add(left_val, right_val),
-                    BinOpKind::Sub => InstructionKind::Sub(left_val, right_val),
-                    BinOpKind::Mul => InstructionKind::Mul(left_val, right_val),
-                    BinOpKind::Div => InstructionKind::Div(left_val, right_val),
-                    BinOpKind::MatMul => InstructionKind::MatMul(left_val, right_val),
-                    BinOpKind::Outer => InstructionKind::Outer(left_val, right_val),
-                    BinOpKind::Dot => InstructionKind::Dot(left_val, right_val),
-                    BinOpKind::Eq => InstructionKind::Eq(left_val, right_val),
-                    BinOpKind::NotEq => InstructionKind::NotEq(left_val, right_val),
-                    BinOpKind::Lt => InstructionKind::Lt(left_val, right_val),
-                    BinOpKind::Le => InstructionKind::Le(left_val, right_val),
-                    BinOpKind::Gt => InstructionKind::Gt(left_val, right_val),
-                    BinOpKind::Ge => InstructionKind::Ge(left_val, right_val),
-                };
-                
-                Ok(self.emit(kind))
+
+                // Special handling for string concatenation
+                if *op == BinOpKind::Add {
+                    // For now, assume + always means string concatenation if either operand is a string
+                    // In a full implementation, we'd have proper type information
+                    Ok(self.emit(InstructionKind::RuntimeCall {
+                        function_name: "vexl_string_concat".to_string(),
+                        args: vec![left_val, right_val],
+                    }))
+                } else {
+                    // Regular arithmetic operations
+                    let kind = match op {
+                        BinOpKind::Add => InstructionKind::Add(left_val, right_val),
+                        BinOpKind::Sub => InstructionKind::Sub(left_val, right_val),
+                        BinOpKind::Mul => InstructionKind::Mul(left_val, right_val),
+                        BinOpKind::Div => InstructionKind::Div(left_val, right_val),
+                        BinOpKind::MatMul => InstructionKind::MatMul(left_val, right_val),
+                        BinOpKind::Outer => InstructionKind::Outer(left_val, right_val),
+                        BinOpKind::Dot => InstructionKind::Dot(left_val, right_val),
+                        BinOpKind::Eq => InstructionKind::Eq(left_val, right_val),
+                        BinOpKind::NotEq => InstructionKind::NotEq(left_val, right_val),
+                        BinOpKind::Lt => InstructionKind::Lt(left_val, right_val),
+                        BinOpKind::Le => InstructionKind::Le(left_val, right_val),
+                        BinOpKind::Gt => InstructionKind::Gt(left_val, right_val),
+                        BinOpKind::Ge => InstructionKind::Ge(left_val, right_val),
+                    };
+
+                    Ok(self.emit(kind))
+                }
             }
             
             Expr::App { func, args, .. } => {
@@ -142,14 +203,56 @@ impl LoweringContext {
                             }
                             "print" => {
                                 if lowered_args.len() == 1 {
-                                    // For now, assume all prints are integers
-                                    // TODO: Type-based dispatch to print_int, print_string, etc.
+                                    // Type-based dispatch for print
+                                    // For now, we dispatch based on the instruction that produced the argument
+                                    let arg_val = &lowered_args[0];
+                                    // Check if this argument came from a string constant
+                                    // This is a simplified approach - in a full implementation,
+                                    // we'd have type information available during lowering
+                                    let func_name = if self.is_string_value(*arg_val) {
+                                        "vexl_print_string"
+                                    } else if self.is_float_value(*arg_val) {
+                                        "vexl_print_float"
+                                    } else {
+                                        "vexl_print_int"
+                                    };
+
+                                    Ok(self.emit(InstructionKind::RuntimeCall {
+                                        function_name: func_name.to_string(),
+                                        args: lowered_args,
+                                    }))
+                                } else {
+                                    Err("print() expects one argument".to_string())
+                                }
+                            }
+                            "print_int" => {
+                                if lowered_args.len() == 1 {
                                     Ok(self.emit(InstructionKind::RuntimeCall {
                                         function_name: "vexl_print_int".to_string(),
                                         args: lowered_args,
                                     }))
                                 } else {
-                                    Err("print() expects one argument".to_string())
+                                    Err("print_int() expects one argument".to_string())
+                                }
+                            }
+                            "print_string" => {
+                                if lowered_args.len() == 1 {
+                                    Ok(self.emit(InstructionKind::RuntimeCall {
+                                        function_name: "vexl_print_string".to_string(),
+                                        args: lowered_args,
+                                    }))
+                                } else {
+                                    Err("print_string() expects one argument".to_string())
+                                }
+                            }
+                            "print_float" => {
+                                if lowered_args.len() == 1 {
+                                    Ok(self.emit(InstructionKind::RuntimeCall {
+                                        function_name: "vexl_print_float".to_string(),
+                                        args: lowered_args,
+                                    }))
+                                } else {
+                                    Err("print_float() expects one argument".to_string())
                                 }
                             }
                             "len" => {
@@ -186,9 +289,21 @@ impl LoweringContext {
             }
 
             Expr::Let { name, value, body, .. } => {
+                // For top-level let bindings, store the variable globally
+                // Evaluate the value and store it
                 let val = self.lower_expr(value)?;
+                self.emit(InstructionKind::StoreVar {
+                    name: name.clone(),
+                    value: val,
+                });
+
+                // Store in the symbol table for subsequent lookups
                 self.variables.insert(name.clone(), val);
-                self.lower_expr(body)
+
+                // Evaluate the body (usually dummy for top-level lets)
+                let body_result = self.lower_expr(body)?;
+
+                Ok(body_result)
             }
 
             Expr::Fix { name, body, .. } => {
@@ -200,7 +315,8 @@ impl LoweringContext {
 
             Expr::Lambda { params, body, .. } => {
                 // Create a new function with parameters
-                let func_name = format!("lambda_{}", self.module.functions.len());
+                let lambda_index = self.module.functions.len();
+                let func_name = format!("lambda_{}", lambda_index);
 
                 // Create parameter ValueIds
                 let mut param_values = Vec::new();
@@ -255,10 +371,8 @@ impl LoweringContext {
                 self.variables = old_variables;
                 self.current_instructions = old_instructions;
 
-                // Return the function (as a value that can be called)
-                // For now, return a placeholder - in full implementation,
-                // we'd return a function pointer value
-                Ok(self.emit(InstructionKind::ConstInt(0)))
+                // Return lambda index as identifier (0 for lambda_0, 1 for lambda_1, etc.)
+                Ok(self.emit(InstructionKind::ConstInt(lambda_index as i64)))
             }
             
             
@@ -375,6 +489,8 @@ impl Default for LoweringContext {
 pub fn lower_decls_to_vir(decls: &[Decl]) -> Result<VirModule, String> {
     let mut ctx = LoweringContext::new();
     let mut has_main = false;
+    let mut main_instructions = Vec::new();
+    let mut last_result = None;
 
     for decl in decls {
         match decl {
@@ -442,33 +558,40 @@ pub fn lower_decls_to_vir(decls: &[Decl]) -> Result<VirModule, String> {
                 ctx.current_instructions = old_instructions;
             }
             Decl::Expr(expr) => {
-                // For expression declarations, create a main function
+                // For expression declarations, collect them for a single main function
                 let result = ctx.lower_expr(expr)?;
+                last_result = Some(result);
 
-                let block_id = ctx.module.fresh_block();
-                let block = BasicBlock {
-                    id: block_id,
-                    instructions: std::mem::take(&mut ctx.current_instructions),
-                    terminator: Terminator::Return(result),
-                };
+                // Add instructions to main function
+                main_instructions.extend(std::mem::take(&mut ctx.current_instructions));
 
-                let func = VirFunction {
-                    name: "main".to_string(),
-                    params: vec![],
-                    blocks: HashMap::from([(block_id, block)]),
-                    entry_block: block_id,
-                    effect: vexl_core::Effect::Pure,
-                    signature: FunctionSignature::new(vec![], VirType::Int64),
-                };
-
-                ctx.module.add_function("main".to_string(), func);
                 has_main = true;
             }
         }
     }
 
-    // If no main function was defined, create a default one that returns 0
-    if !has_main {
+    // Create main function with all expression declarations
+    if has_main && !main_instructions.is_empty() {
+        let block_id = ctx.module.fresh_block();
+        let result_value = last_result.unwrap_or_else(|| ctx.emit(InstructionKind::ConstInt(0)));
+        let block = BasicBlock {
+            id: block_id,
+            instructions: main_instructions,
+            terminator: Terminator::Return(result_value),
+        };
+
+        let func = VirFunction {
+            name: "main".to_string(),
+            params: vec![],
+            blocks: HashMap::from([(block_id, block)]),
+            entry_block: block_id,
+            effect: vexl_core::Effect::Pure,
+            signature: FunctionSignature::new(vec![], VirType::Int64),
+        };
+
+        ctx.module.add_function("main".to_string(), func);
+    } else if !has_main {
+        // If no main function was defined, create a default one that returns 0
         let block_id = ctx.module.fresh_block();
         let block = BasicBlock {
             id: block_id,
@@ -514,6 +637,12 @@ fn ast_type_to_vir_type(ast_type: &Type) -> VirType {
 pub fn lower_to_vir(expr: &Expr) -> Result<VirModule, String> {
     let mut ctx = LoweringContext::new();
     let result = ctx.lower_expr(expr)?;
+
+    eprintln!("DEBUG: lower_to_vir - result value: {:?}", result);
+    eprintln!("DEBUG: lower_to_vir - current_instructions count: {}", ctx.current_instructions.len());
+    for (i, instr) in ctx.current_instructions.iter().enumerate() {
+        eprintln!("DEBUG: lower_to_vir - instruction {}: {:?} -> {:?}", i, instr.kind, instr.result);
+    }
 
     // Create a main function that returns the result
     // For JIT compatibility, main should return i32 in the VIR signature

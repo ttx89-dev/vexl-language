@@ -131,7 +131,16 @@ pub enum InstructionKind {
         function_name: String,
         args: Vec<ValueId>,
     },
-    
+
+    // Scope management for variables
+    PushScope,
+    PopScope,
+    StoreVar {
+        name: String,
+        value: ValueId,
+    },
+    LoadVar(String),
+
     // Generator operations
     GeneratorNew {
         func: ValueId,

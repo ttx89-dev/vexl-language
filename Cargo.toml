@@ -40,7 +40,7 @@ vulkan = ["vexl-gpu/vulkan"]
 # Core dependencies
 logos = "0.14"
 chumsky = "0.9"
-inkwell = { version = "0.5", features = ["llvm18-0"] }
+inkwell = { version = "0.4", features = ["llvm14-0", "target-x86", "target-aarch64"], default-features = false }
 rayon = "1.10"
 crossbeam-deque = "0.8"
 

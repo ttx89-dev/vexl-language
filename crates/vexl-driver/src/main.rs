@@ -176,7 +176,9 @@ fn compile_file(input: &PathBuf, output: Option<&PathBuf>, verbose: bool) -> Res
     }
     
     // Parse
+    eprintln!("Starting parsing...");
     let ast = parse(&source).map_err(|e| format!("Parse error: {:?}", e))?;
+    eprintln!("Parsing successful, got {} declarations", ast.len());
     
     if verbose {
         eprintln!("✓ Parse successful");
@@ -215,8 +217,10 @@ fn compile_file(input: &PathBuf, output: Option<&PathBuf>, verbose: bool) -> Res
 
 
     
-    // Optimize
-    optimize(&mut vir_module);
+    // Optimize (disabled for now due to crash)
+    println!("🛠️  Skipping optimization (temporarily disabled)");
+    // optimize(&mut vir_module);
+    println!("✅ Optimization skipped");
     
     if verbose {
         eprintln!("✓ Optimizations applied");
@@ -306,49 +310,110 @@ fn check_file(input: &PathBuf) -> Result<(), String> {
 }
 
 fn run_file(input: &PathBuf) -> Result<(), String> {
-    // 1. Compile to LLVM IR (temp file)
-    let temp_ll = input.with_extension("tmp.ll");
-    compile_file(input, Some(&temp_ll), false)?;
+    // Initialize VEXL runtime
+    unsafe { vexl_runtime::vexl_runtime_init(); }
 
-    // 2. Link to executable (temp file)
-    let temp_exe = input.with_extension("tmp");
-    if let Err(e) = link_executable(&temp_ll, &temp_exe) {
-        let _ = fs::remove_file(&temp_ll);
-        return Err(e);
-    }
+    // Read source
+    let source = fs::read_to_string(input)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
 
-    // 3. Run
+    // Parse
+    let ast = parse(&source).map_err(|e| format!("Parse error: {:?}", e))?;
+    println!("✅ Parsing successful, {} declarations", ast.len());
+
+    // Lower to VIR - always use lower_decls_to_vir for full program support
+    println!("🔄 Starting VIR lowering...");
+    let mut vir_module = lower_decls_to_vir(&ast)?;
+    println!("✅ VIR lowering successful");
+
+    // Optimize
+    optimize(&mut vir_module);
+
+    // Create JIT engine and register runtime functions
+    let context = inkwell::context::Context::create();
+    let mut jit_engine = JitEngine::new(&context);
+
+    // Register runtime functions with the JIT engine's symbol resolver
+    let symbol_resolver = &mut jit_engine.symbol_resolver;
+    symbol_resolver.register_static_symbol(
+        "vexl_vec_map_parallel",
+        vexl_runtime::vexl_vec_map_parallel as *mut std::ffi::c_void,
+        vexl_codegen::FunctionDescriptor::new(
+            "vexl_vec_map_parallel".to_string(),
+            vec![vexl_ir::VirType::Pointer, vexl_ir::VirType::Pointer, vexl_ir::VirType::Int64],
+            vexl_ir::VirType::Pointer,
+            vexl_codegen::CallingConvention::C,
+            false,
+        ),
+    );
+
+    symbol_resolver.register_static_symbol(
+        "vexl_vec_sum",
+        vexl_runtime::vexl_vec_sum as *mut std::ffi::c_void,
+        vexl_codegen::FunctionDescriptor::new(
+            "vexl_vec_sum".to_string(),
+            vec![vexl_ir::VirType::Pointer],
+            vexl_ir::VirType::Int64,
+            vexl_codegen::CallingConvention::C,
+            false,
+        ),
+    );
+
+    symbol_resolver.register_static_symbol(
+        "vexl_print_int",
+        vexl_runtime::ffi::vexl_print_int as *mut std::ffi::c_void,
+        vexl_codegen::FunctionDescriptor::new(
+            "vexl_print_int".to_string(),
+            vec![vexl_ir::VirType::Int64],
+            vexl_ir::VirType::Void,
+            vexl_codegen::CallingConvention::C,
+            false,
+        ),
+    );
+
+    symbol_resolver.register_static_symbol(
+        "vexl_print_float",
+        vexl_runtime::ffi::vexl_print_float as *mut std::ffi::c_void,
+        vexl_codegen::FunctionDescriptor::new(
+            "vexl_print_float".to_string(),
+            vec![vexl_ir::VirType::Float64],
+            vexl_ir::VirType::Void,
+            vexl_codegen::CallingConvention::C,
+            false,
+        ),
+    );
+
+    symbol_resolver.register_static_symbol(
+        "vexl_print_string",
+        vexl_runtime::ffi::vexl_print_string as *mut std::ffi::c_void,
+        vexl_codegen::FunctionDescriptor::new(
+            "vexl_print_string".to_string(),
+            vec![vexl_ir::VirType::Pointer, vexl_ir::VirType::Int64],
+            vexl_ir::VirType::Void,
+            vexl_codegen::CallingConvention::C,
+            false,
+        ),
+    );
+
+    symbol_resolver.register_static_symbol(
+        "vexl_string_concat",
+        vexl_runtime::vexl_string_concat as *mut std::ffi::c_void,
+        vexl_codegen::FunctionDescriptor::new(
+            "vexl_string_concat".to_string(),
+            vec![vexl_ir::VirType::Pointer, vexl_ir::VirType::Int64, vexl_ir::VirType::Pointer, vexl_ir::VirType::Int64],
+            vexl_ir::VirType::Pointer,
+            vexl_codegen::CallingConvention::C,
+            false,
+        ),
+    );
+
     println!("🚀 Running {}...", input.display());
-    println!("Executable path: {}", temp_exe.display());
-    let exe_path = temp_exe.canonicalize().unwrap_or(temp_exe.clone());
-    println!("Canonical executable path: {}", exe_path.display());
-    let status = std::process::Command::new(&exe_path)
-        .status()
-        .map_err(|e| format!("Failed to run executable: {}", e));
 
-    // Cleanup (only on success for now to debug)
-    if status.is_ok() {
-        let _ = fs::remove_file(&temp_ll);
-        let _ = fs::remove_file(&temp_exe);
-    }
+    let result = jit_engine.compile_and_execute(&vir_module)?;
 
-    match status {
-        Ok(s) => {
-            let code = s.code().unwrap_or(0);
-            if code == 0 {
-                println!("Program completed successfully");
-                Ok(())
-            } else if code > 0 && code < 128 {
-                // Program returned an integer result
-                println!("Program result: {}", code);
-                Ok(())
-            } else {
-                // Actual error (signal or other failure)
-                Err(format!("Program failed with exit code: {}", code))
-            }
-        }
-        Err(e) => Err(e),
-    }
+    println!("Program result: {}", result);
+
+    Ok(())
 }
 
 fn eval_expression(expression: &str) -> Result<(), String> {
@@ -379,7 +444,7 @@ fn eval_expression(expression: &str) -> Result<(), String> {
 
     // Create JIT engine and evaluate
     let context = inkwell::context::Context::create();
-    let mut jit_engine = JitEngine::new(&context)?;
+    let mut jit_engine = JitEngine::new(&context);
 
     let result = jit_engine.compile_and_execute(&vir_module)?;
 

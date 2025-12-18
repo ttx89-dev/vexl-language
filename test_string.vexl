@@ -1,0 +1,9 @@
+# Test string handling and type-based dispatch
+
+let greeting = "Hello"
+let name = "VEXL"
+let message = greeting + " " + name + "!"
+
+print(message)
+print(42)
+print(3.14)

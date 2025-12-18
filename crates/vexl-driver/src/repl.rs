@@ -42,9 +42,10 @@ impl ReplSession {
     /// Create a new REPL session
     pub fn new() -> Result<Self, String> {
         let llvm_context = Context::create();
-        let jit_engine = unsafe {
-            std::mem::transmute(JitEngine::new(&llvm_context)?)
-        };
+    let jit_engine = JitEngine::new(&llvm_context);
+    let jit_engine = unsafe {
+        std::mem::transmute(jit_engine)
+    };
 
         let mut exec_context = ExecutionContext::new();
         exec_context.init_jit()?;

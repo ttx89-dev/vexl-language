@@ -318,9 +318,9 @@ impl ExecutionContext {
 /// Scope management for nested contexts
 pub struct Scope {
     /// Parent scope (if any)
-    parent: Option<Rc<RefCell<Scope>>>,
+    pub parent: Option<Rc<RefCell<Scope>>>,
     /// Local variables
-    locals: HashMap<String, Value>,
+    pub locals: HashMap<String, Value>,
 }
 
 impl Scope {

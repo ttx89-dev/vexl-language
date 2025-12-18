@@ -1,0 +1,12 @@
+// A simple greeting program
+let name = "World"
+let greeting = "Hello, " + name + "!"
+print(greeting)
+
+// Basic vector operations
+let numbers = [1, 2, 3, 4, 5]
+let doubled = numbers |> map(|x| x * 2)
+let filtered = doubled |> filter(|x| x > 5)
+let sum = filtered |> sum()
+
+print("Sum of doubled numbers > 5: " + sum)

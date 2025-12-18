@@ -844,6 +844,31 @@ impl<'ctx> LLVMCodegen<'ctx> {
                 // TODO: Properly set up incoming edges
                 Ok(phi.as_basic_value())
             }
+
+            // Scope management instructions - these are handled at runtime
+            // In LLVM, we can just return a dummy value since scope management
+            // is handled by the interpreter's scope system
+            InstructionKind::PushScope => {
+                let i64_type = self.context.i64_type();
+                Ok(i64_type.const_int(0, false).into())
+            }
+            InstructionKind::PopScope => {
+                let i64_type = self.context.i64_type();
+                Ok(i64_type.const_int(0, false).into())
+            }
+            InstructionKind::StoreVar { name: _, value } => {
+                // In LLVM, we can't directly store to interpreter scopes
+                // Just return the value we're "storing"
+                self.get_value(*value)
+            }
+            InstructionKind::LoadVar(name) => {
+                // In LLVM, we can't directly load from interpreter scopes
+                // Return a dummy value - this will be handled by the interpreter
+                // In a full implementation, this would need proper integration
+                // between LLVM codegen and interpreter scopes
+                let i64_type = self.context.i64_type();
+                Ok(i64_type.const_int(0, false).into())
+            }
         }
     }
     
@@ -852,16 +877,32 @@ impl<'ctx> LLVMCodegen<'ctx> {
         match term {
             Terminator::Return(value_id) => {
                 let value = self.get_value(*value_id)?;
+                eprintln!("Compiling return for function '{}', value type: {:?}", self.current_function_name, value);
+
                 // For main function, truncate i64 to i32 for JIT compatibility
                 let return_value = if self.current_function_name == "main" && value.is_int_value() {
                     let int_val = value.into_int_value();
                     let i32_type = self.context.i32_type();
-                    self.builder.build_int_truncate(int_val, i32_type, "trunc_result").unwrap().into()
+                    eprintln!("Truncating i64 to i32 for main function");
+                    match self.builder.build_int_truncate(int_val, i32_type, "trunc_result") {
+                        Ok(truncated) => truncated.into(),
+                        Err(e) => {
+                            eprintln!("Failed to truncate: {:?}", e);
+                            return Err(format!("Failed to truncate return value: {:?}", e));
+                        }
+                    }
                 } else {
                     value
                 };
-                self.builder.build_return(Some(&return_value)).unwrap();
-                Ok(())
+
+                eprintln!("Building return instruction");
+                match self.builder.build_return(Some(&return_value)) {
+                    Ok(_) => Ok(()),
+                    Err(e) => {
+                        eprintln!("Failed to build return: {:?}", e);
+                        Err(format!("Failed to build return instruction: {:?}", e))
+                    }
+                }
             }
 
             Terminator::Branch { cond, then_block, else_block } => {

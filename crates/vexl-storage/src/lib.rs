@@ -123,8 +123,7 @@ pub struct StorageStats {
     pub disk_usage: usize,
 }
 
-/// Wrapper for VectorSerialize that implements Debug
-#[derive(Debug)]
+/// Wrapper for VectorSerialize
 struct VectorSerializeWrapper(Box<dyn VectorSerialize>);
 
 impl VectorSerialize for VectorSerializeWrapper {
@@ -347,22 +346,7 @@ impl FractalStorage for FractalStore {
     }
 }
 
-/// Trait for dynamic typing support
-trait AsAny {
-    fn as_any(&self) -> &dyn std::any::Any;
-}
 
-impl<T: 'static> AsAny for T {
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-}
-
-impl AsAny for dyn VectorSerialize {
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-}
 
 #[cfg(test)]
 mod tests {

@@ -27,6 +27,8 @@ pub struct SymbolResolver {
     static_symbols: HashMap<String, SymbolInfo>,
     /// Cache for resolved symbols
     resolved_cache: Mutex<HashMap<String, SymbolInfo>>,
+    /// Function registry for descriptor lookup
+    function_registry: FunctionRegistry,
 }
 
 impl SymbolResolver {
@@ -35,6 +37,7 @@ impl SymbolResolver {
         Self {
             static_symbols: HashMap::new(),
             resolved_cache: Mutex::new(HashMap::new()),
+            function_registry: FunctionRegistry::default(),
         }
     }
 
@@ -103,7 +106,12 @@ impl SymbolResolver {
 
     /// Resolve a symbol dynamically using platform-specific methods
     fn resolve_dynamic_symbol(&self, name: &str) -> Result<SymbolInfo, String> {
-        // Platform-specific symbol resolution
+        // First try direct function resolution for known runtime functions
+        if let Some(info) = self.resolve_runtime_function(name) {
+            return Ok(info);
+        }
+
+        // Fall back to platform-specific symbol resolution
         #[cfg(target_os = "linux")]
         {
             self.resolve_linux_symbol(name)
@@ -123,6 +131,12 @@ impl SymbolResolver {
         {
             Err(format!("Dynamic symbol resolution not supported on this platform"))
         }
+    }
+
+    /// Resolve known runtime functions directly
+    fn resolve_runtime_function(&self, name: &str) -> Option<SymbolInfo> {
+        // For now, return None - runtime functions will be registered by the driver
+        None
     }
 
     #[cfg(target_os = "linux")]
