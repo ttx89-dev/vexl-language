@@ -1,4 +1,4 @@
-# VEXL [ PROJECT DELAYED DUE TO EVALUATION ] 
+# VEXL
 
 > **"What if everything was a vector?"**
 
