@@ -1,4 +1,4 @@
-# VEXL [discontinued]
+# VEXL [ndiscontinued]
 
 > **"What if everything was a vector?"**
 
