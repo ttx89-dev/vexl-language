@@ -404,12 +404,6 @@ VEXL is designed for high-performance computing:
 
 *Results on Intel i7-8700K, 16GB RAM*
 
-## Community
-
-- **GitHub**: https://github.com/your-org/vexl-language
-- **Discord**: [Join our community](https://discord.gg/vexl)
-- **Forum**: https://forum.vexl.dev
-- **Twitter**: [@VEXLLanguage](https://twitter.com/vexl)
 
 ## License
 
