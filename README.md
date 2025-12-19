@@ -1,4 +1,4 @@
-# VEXL [ndiscontinued]
+# VEXL [dev phase]
 
 > **"What if everything was a vector?"**
 
