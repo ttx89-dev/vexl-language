@@ -3,7 +3,7 @@
 //! This module provides comprehensive hardware validation testing
 //! to ensure GPU functionality works correctly across different scenarios.
 
-use std::time::{Duration, Instant};
+// use std::time::{Duration, Instant}; // Not currently used
 use crate::*;
 
 /// Run hardware validation tests

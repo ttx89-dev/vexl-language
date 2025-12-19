@@ -4,7 +4,7 @@
 //! power management, and automatic shutdown mechanisms to ensure safe GPU operations.
 
 use std::time::{Duration, Instant};
-use std::collections::HashMap;
+// use std::collections::HashMap; // Not currently used
 use std::sync::{Arc, Mutex};
 use std::thread;
 

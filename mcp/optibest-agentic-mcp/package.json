@@ -1,0 +1,18 @@
+{
+  "name": "optibest-agentic-mcp",
+  "version": "1.0.0",
+  "description": "Enhanced OPTIBEST HRM VEXL Collab MCP Server with Agentic Cyclic Progression Loops",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "vexl-runtime": "file:../../crates/vexl-runtime",
+    "uuid": "^9.0.0",
+    "winston": "^3.8.0"
+  },
+  "keywords": ["mcp", "optibest", "vexl", "agentic", "automation"],
+  "author": "OPTIBEST Framework",
+  "license": "MIT"
+}

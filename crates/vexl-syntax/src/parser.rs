@@ -271,7 +271,7 @@ fn simple_parse(tokens: &[Token]) -> Result<Vec<Decl>, Vec<Simple<Token>>> {
 
 /// Parse a single expression starting at the given index
 fn parse_expression(tokens: &[Token], i: &mut usize) -> Result<Expr, Vec<Simple<Token>>> {
-    let start_i = *i;
+    // let start_i = *i; // Not currently used
 
     // Parse primary expression
     let mut expr = match &tokens[*i] {

@@ -3,9 +3,10 @@
 //! Advanced memory management with garbage collection for VEXL vectors and generators.
 //! Provides automatic memory lifecycle management with performance optimization.
 
-use std::alloc::{alloc, dealloc, Layout};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::alloc::{alloc, Layout};
+use std::sync::atomic::AtomicUsize;
+// use std::sync::atomic::Ordering; // Not currently used
+use std::sync::{Mutex, OnceLock};
 
 /// Memory statistics tracking
 #[derive(Debug, Clone)]
