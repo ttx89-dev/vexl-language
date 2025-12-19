@@ -13,12 +13,6 @@ We actively support the following versions of VEXL with security updates:
 
 If you discover a security vulnerability in VEXL, please report it to us as follows:
 
-### Contact Information
-
-- **Email**: security@vexl.dev
-- **PGP Key**: Available at https://vexl.dev/security.asc
-- **Response Time**: We aim to respond within 48 hours
-
 ### What to Include
 
 Please include the following information in your report:
