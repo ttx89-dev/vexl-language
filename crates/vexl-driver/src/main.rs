@@ -39,6 +39,10 @@ enum Commands {
         /// Show optimization passes
         #[arg(short, long)]
         verbose: bool,
+
+        /// Enable VIR optimization passes (experimental)
+        #[arg(short = 'O', long)]
+        optimize: bool,
     },
 
     /// Type-check a VEXL file without compiling
@@ -53,6 +57,10 @@ enum Commands {
         /// Input VEXL source file
         #[arg(value_name = "FILE")]
         input: PathBuf,
+
+        /// Enable VIR optimization passes (experimental)
+        #[arg(short = 'O', long)]
+        optimize: bool,
     },
 
     /// Evaluate a VEXL expression
@@ -91,16 +99,16 @@ enum Commands {
 fn main() {
     let cli = Cli::parse();
 
-    // Handle direct script execution: 'vexl script.vexl' -> 'vexl run script.vexl'
+    // Handle direct script execution: 'vexl script.vexl' -> 'vexl run script.vexl' (optimization off)
     let command = if cli.input.is_some() && cli.command.is_none() {
-        Some(Commands::Run { input: cli.input.unwrap() })
+        Some(Commands::Run { input: cli.input.unwrap(), optimize: false })
     } else {
         cli.command
     };
 
     match command {
-        Some(Commands::Compile { input, output, verbose }) => {
-            if let Err(e) = compile_file(&input, output.as_ref(), verbose) {
+        Some(Commands::Compile { input, output, verbose, optimize }) => {
+            if let Err(e) = compile_file(&input, output.as_ref(), verbose, optimize) {
                 eprintln!("Error: {}", e);
                 std::process::exit(1);
             }
@@ -114,8 +122,8 @@ fn main() {
             println!("✓ Type check passed!");
         }
 
-        Some(Commands::Run { input }) => {
-            if let Err(e) = run_file(&input) {
+        Some(Commands::Run { input, optimize }) => {
+            if let Err(e) = run_file(&input, optimize) {
                 eprintln!("Error: {}", e);
                 std::process::exit(1);
             }
@@ -165,7 +173,7 @@ fn main() {
     }
 }
 
-fn compile_file(input: &PathBuf, output: Option<&PathBuf>, verbose: bool) -> Result<(), String> {
+fn compile_file(input: &PathBuf, output: Option<&PathBuf>, verbose: bool, optimize_flag: bool) -> Result<(), String> {
     // Read source
     let source = fs::read_to_string(input)
         .map_err(|e| format!("Failed to read file: {}", e))?;
@@ -217,10 +225,20 @@ fn compile_file(input: &PathBuf, output: Option<&PathBuf>, verbose: bool) -> Res
 
 
     
-    // Optimize (disabled for now due to crash)
-    println!("🛠️  Skipping optimization (temporarily disabled)");
-    // optimize(&mut vir_module);
-    println!("✅ Optimization skipped");
+    // Optimize (opt-in via --optimize / -O flag; default off due to experimental stability)
+    if optimize_flag {
+        if verbose {
+            eprintln!("⚡ Running VIR optimization passes...");
+        }
+        optimize(&mut vir_module);
+        if verbose {
+            eprintln!("✓ VIR optimization complete");
+        }
+    } else {
+        if verbose {
+            eprintln!("○ VIR optimization disabled (pass -O to enable)");
+        }
+    }
     
     if verbose {
         eprintln!("✓ Optimizations applied");
@@ -324,7 +342,7 @@ fn check_file(input: &PathBuf) -> Result<(), String> {
     Ok(())
 }
 
-fn run_file(input: &PathBuf) -> Result<(), String> {
+fn run_file(input: &PathBuf, optimize_flag: bool) -> Result<(), String> {
     // Initialize VEXL runtime
     unsafe { vexl_runtime::vexl_runtime_init(); }
 

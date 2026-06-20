@@ -1,0 +1,123 @@
+//! VEXL Standard Library - Random Number Generation
+//! Provides random number generators and sampling utilities.
+
+// ═══════════════════════════════════════════════════════════
+// BASIC RANDOM NUMBERS
+// ═══════════════════════════════════════════════════════════
+
+/// Generate random float in [0.0, 1.0)
+pure fn random() -> Float = {
+    __intrinsic_random_float()
+}
+
+/// Generate random integer in [min, max] inclusive
+pure fn random_int(min: Int, max: Int) -> Int = {
+    if max < min {
+        0  // Error: invalid range
+    } else {
+        __intrinsic_random_int(min, max)
+    }
+}
+
+/// Generate random float in [min, max)
+pure fn random_float(min: Float, max: Float) -> Float = {
+    if max <= min {
+        0.0  // Error: invalid range
+    } else {
+        min + random() * (max - min)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SEEDED RANDOM (Deterministic)
+// ═══════════════════════════════════════════════════════════
+
+/// Create a seeded random generator (returns seed for reproducibility)
+pure fn seeded_random(seed: Int) -> Float = {
+    __intrinsic_seeded_random_float(seed)
+}
+
+/// Generate random int from seed
+pure fn seeded_random_int(seed: Int, min: Int, max: Int) -> Int = {
+    if max < min {
+        0
+    } else {
+        let range = max - min + 1
+        let r = seeded_random(seed)
+        min + (r * (range as Float)) as Int % range
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DISTRIBUTIONS
+// ═══════════════════════════════════════════════════════════
+
+/// Generate normally distributed random value (Box-Muller transform)
+pure fn random_normal() -> Float = {
+    let u1 = random()
+    let u2 = random()
+    if u1 < 0.0000001 {
+        u1 + 0.0000001  // Avoid log(0)
+    } else {
+        let magnitude = sqrt(-2.0 * ln(u1))
+        magnitude * cos(2.0 * 3.141592653589793 * u2)
+    }
+}
+
+/// Generate random value from normal distribution with given mean and stddev
+pure fn random_normal_dist(mean: Float, stddev: Float) -> Float = {
+    mean + stddev * random_normal()
+}
+
+// ═══════════════════════════════════════════════════════════
+// VECTOR OPERATIONS
+// ═══════════════════════════════════════════════════════════
+
+/// Generate vector of random floats in [0.0, 1.0)
+pure fn random_vector(n: Int) -> Vector<Float, 1> = {
+    [random() | _ <- [0..n]]
+}
+
+/// Generate vector of random ints in [min, max]
+pure fn random_int_vector(n: Int, min: Int, max: Int) -> Vector<Int, 1> = {
+    [random_int(min, max) | _ <- [0..n]]
+}
+
+/// Shuffle a vector (Fisher-Yates)
+pure fn shuffle<T>(v: Vector<T, 1>) -> Vector<T, 1> = {
+    __intrinsic_shuffle(v)
+}
+
+/// Pick a random element from vector
+pure fn choice<T>(v: Vector<T, 1>) -> T = {
+    let n = len(v)
+    if n == 0 {
+        0  // Error sentinel
+    } else {
+        let idx = random_int(0, n - 1)
+        v[idx]
+    }
+}
+
+/// Sample k elements from vector (without replacement)
+pure fn sample<T>(v: Vector<T, 1>, k: Int) -> Vector<T, 1> = {
+    if k >= len(v) {
+        shuffle(v)
+    } else {
+        take(k, shuffle(v))
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MATRIX OPERATIONS
+// ═══════════════════════════════════════════════════════════
+
+/// Generate random matrix
+pure fn random_matrix(rows: Int, cols: Int) -> Vector<Vector<Float, 1>, 1> = {
+    [random_vector(cols) | _ <- [0..rows]]
+}
+
+/// Generate random integer matrix
+pure fn random_int_matrix(rows: Int, cols: Int, min: Int, max: Int) -> Vector<Vector<Int, 1>, 1> = {
+    [random_int_vector(cols, min, max) | _ <- [0..rows]]
+}

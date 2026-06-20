@@ -1,0 +1,94 @@
+//! VEXL Standard Library - Time and Date Utilities
+//! Functions for working with time, timestamps, and durations.
+
+// ═══════════════════════════════════════════════════════════
+// TIMESTAMP FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+/// Get current timestamp (seconds since epoch)
+io fn timestamp() -> Float = {
+    __intrinsic_timestamp()
+}
+
+/// Get current timestamp in milliseconds
+io fn timestamp_ms() -> Int = {
+    __intrinsic_timestamp_ms()
+}
+
+// ═══════════════════════════════════════════════════════════
+// MEASUREMENT
+// ═══════════════════════════════════════════════════════════
+
+/// Measure execution time of a function (returns (result, elapsed_ms))
+io fn measure<T>(f: () -> T) -> (T, Int) = {
+    let start = timestamp_ms()
+    let result = f()
+    let elapsed = timestamp_ms() - start
+    (result, elapsed)
+}
+
+/// Measure execution time and print to console
+io fn time_it<T>(label: String, f: () -> T) -> T = {
+    let start = timestamp_ms()
+    let result = f()
+    let elapsed = timestamp_ms() - start
+    print_string("[TIME] ")
+    print_string(label)
+    print_string(": ")
+    print_int(elapsed)
+    print_string(" ms")
+    print_newline()
+    result
+}
+
+// ═══════════════════════════════════════════════════════════
+// FORMATTING
+// ═══════════════════════════════════════════════════════════
+
+/// Format duration (milliseconds) as human-readable string
+pure fn format_duration(ms: Int) -> String = {
+    if ms < 1000 {
+        concat_strings(format_int(ms), " ms")
+    } else if ms < 60 * 1000 {
+        let seconds = ms / 1000
+        let remaining_ms = ms % 1000
+        concat_strings(concat_strings(format_int(seconds), "."), 
+            concat_strings(format_int_width(remaining_ms, 3), " s"))
+    } else {
+        let total_seconds = ms / 1000
+        let minutes = total_seconds / 60
+        let seconds = total_seconds % 60
+        concat_strings(concat_strings(format_int(minutes), "m "),
+            concat_strings(format_int(seconds), "s"))
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TIMING HELPERS
+// ═══════════════════════════════════════════════════════════
+
+/// Sleep for a given number of milliseconds
+io fn sleep(ms: Int) -> () = {
+    __intrinsic_sleep(ms)
+}
+
+/// Retry an operation up to `max_attempts` times with delay between attempts
+io fn retry<T>(f: () -> T, max_attempts: Int, delay_ms: Int) -> T = {
+    let attempt = 0
+    let last_result = f()
+    attempt = 1
+    while attempt < max_attempts {
+        // If it throws an error, retry
+        // For now, just sleep and retry
+        sleep(delay_ms)
+        last_result = f()
+        attempt = attempt + 1
+    }
+    last_result
+}
+
+/// Rate limiter: ensure minimum interval between calls
+io fn rate_limited<T>(f: () -> T, min_interval_ms: Int) -> T = {
+    // Not yet implemented - would track last call time
+    f()
+}

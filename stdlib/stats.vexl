@@ -1,0 +1,264 @@
+//! VEXL Standard Library - Statistical Functions
+//! Descriptive statistics, hypothesis testing, and data analysis.
+
+// ═══════════════════════════════════════════════════════════
+// DESCRIPTIVE STATISTICS
+// ═══════════════════════════════════════════════════════════
+
+/// Median of numeric vector
+pure fn median(v: Vector<Int, 1>) -> Float = {
+    let sorted = sort(v)
+    let n = len(v)
+    if n % 2 == 0 {
+        let mid = n / 2
+        ((sorted[mid - 1] + sorted[mid]) as Float) / 2.0
+    } else {
+        sorted[n / 2] as Float
+    }
+}
+
+/// Mode (most frequent value)
+pure fn mode(v: Vector<Int, 1>) -> Int = {
+    // Count frequency of each value
+    let sorted = sort(v)
+    let n = len(v)
+    let max_count = 0
+    let mode_val = sorted[0]
+    let i = 0
+    while i < n {
+        let current = sorted[i]
+        let count = 1
+        let j = i + 1
+        while j < n {
+            if sorted[j] == current {
+                count = count + 1
+            }
+            j = j + 1
+        }
+        if count > max_count {
+            max_count = count
+            mode_val = current
+        }
+        i = i + count
+    }
+    mode_val
+}
+
+/// Minimum value
+pure fn min_of(v: Vector<Int, 1>) -> Int = {
+    reduce((a, b) => if a < b { a } else { b }, head(v), tail(v))
+}
+
+/// Maximum value
+pure fn max_of(v: Vector<Int, 1>) -> Int = {
+    reduce((a, b) => if a > b { a } else { b }, head(v), tail(v))
+}
+
+/// Range (max - min)
+pure fn range_of(v: Vector<Int, 1>) -> Int = {
+    max_of(v) - min_of(v)
+}
+
+// ═══════════════════════════════════════════════════════════
+// VARIABILITY
+// ═══════════════════════════════════════════════════════════
+
+/// Variance (population)
+pure fn variance_pop(v: Vector<Int, 1>) -> Float = {
+    let m = mean(v)
+    mean([(x as Float - m) * (x as Float - m) | x <- v])
+}
+
+/// Variance (sample)
+pure fn variance_sample(v: Vector<Int, 1>) -> Float = {
+    let n = len(v)
+    if n <= 1 {
+        0.0
+    } else {
+        let m = mean(v)
+        let sum_sq = sum([(x as Float - m) * (x as Float - m) | x <- v])
+        sum_sq / ((n - 1) as Float)
+    }
+}
+
+/// Standard deviation (sample)
+pure fn std_dev_sample(v: Vector<Int, 1>) -> Float = {
+    sqrt(variance_sample(v))
+}
+
+/// Coefficient of variation
+pure fn coefficient_variation(v: Vector<Int, 1>) -> Float = {
+    let m = mean(v)
+    if m == 0.0 {
+        0.0
+    } else {
+        std_dev_sample(v) / m
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// QUANTILES
+// ═══════════════════════════════════════════════════════════
+
+/// First quartile (Q1)
+pure fn quartile_1(v: Vector<Int, 1>) -> Float = {
+    let sorted = sort(v)
+    let n = len(v)
+    let idx = n / 4
+    if n % 4 == 0 {
+        ((sorted[idx - 1] + sorted[idx]) as Float) / 2.0
+    } else {
+        sorted[idx] as Float
+    }
+}
+
+/// Third quartile (Q3)
+pure fn quartile_3(v: Vector<Int, 1>) -> Float = {
+    let sorted = sort(v)
+    let n = len(v)
+    let idx = (3 * n) / 4
+    if (3 * n) % 4 == 0 {
+        ((sorted[idx - 1] + sorted[idx]) as Float) / 2.0
+    } else {
+        sorted[idx] as Float
+    }
+}
+
+/// Interquartile range (IQR)
+pure fn iqr(v: Vector<Int, 1>) -> Float = {
+    quartile_3(v) - quartile_1(v)
+}
+
+// ═══════════════════════════════════════════════════════════
+// CORRELATION
+// ═══════════════════════════════════════════════════════════
+
+/// Covariance between two vectors
+pure fn covariance(v1: Vector<Int, 1>, v2: Vector<Int, 1>) -> Float = {
+    let n = len(v1)
+    let mean1 = mean(v1)
+    let mean2 = mean(v2)
+    let sum_product = sum([(v1[i] as Float - mean1) * (v2[i] as Float - mean2) | i <- [0..n]])
+    sum_product / (n - 1) as Float
+}
+
+/// Pearson correlation coefficient
+pure fn correlation(v1: Vector<Int, 1>, v2: Vector<Int, 1>) -> Float = {
+    let cov = covariance(v1, v2)
+    let sd1 = std_dev_sample(v1)
+    let sd2 = std_dev_sample(v2)
+    if sd1 == 0.0 || sd2 == 0.0 {
+        0.0
+    } else {
+        cov / (sd1 * sd2)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATA TRANSFORMATION
+// ═══════════════════════════════════════════════════════════
+
+/// Z-score normalization (standardization)
+pure fn z_score(v: Vector<Int, 1>) -> Vector<Float, 1> = {
+    let m = mean(v)
+    let sd = std_dev_sample(v)
+    if sd == 0.0 {
+        [0.0 | _ <- v]
+    } else {
+        [(x as Float - m) / sd | x <- v]
+    }
+}
+
+/// Min-max normalization to [0, 1]
+pure fn min_max_normalize(v: Vector<Int, 1>) -> Vector<Float, 1> = {
+    let min_val = min_of(v) as Float
+    let max_val = max_of(v) as Float
+    let range = max_val - min_val
+    if range == 0.0 {
+        [0.5 | _ <- v]
+    } else {
+        [(x as Float - min_val) / range | x <- v]
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// WINDOW FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+/// Simple moving average
+pure fn moving_average(v: Vector<Int, 1>, window: Int) -> Vector<Float, 1> = {
+    let n = len(v)
+    [mean(take(window, drop(i, v))) | i <- [0..n - window + 1]]
+}
+
+/// Cumulative sum
+pure fn cumsum(v: Vector<Int, 1>) -> Vector<Int, 1> = {
+    scan((acc, x) => acc + x, 0, v)
+}
+
+/// Cumulative product
+pure fn cumprod(v: Vector<Int, 1>) -> Vector<Int, 1> = {
+    scan((acc, x) => acc * x, 1, v)
+}
+
+/// Scan (prefix operation)
+pure fn scan<T>(f: (T, T) -> T, init: T, v: Vector<T, 1>) -> Vector<T, 1> = {
+    let n = len(v)
+    let result = []
+    let acc = init
+    let i = 0
+    while i < n {
+        acc = f(acc, v[i])
+        result = result ++ [acc]
+        i = i + 1
+    }
+    result
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUMMARY STATISTICS
+// ═══════════════════════════════════════════════════════════
+
+/// Compute a full 5-number summary
+pure fn five_number_summary(v: Vector<Int, 1>) -> Vector<Float, 1> = {
+    [min_of(v) as Float,
+     quartile_1(v),
+     median(v),
+     quartile_3(v),
+     max_of(v) as Float]
+}
+
+/// Compute all common descriptive statistics
+pure fn describe(v: Vector<Int, 1>) -> String = {
+    let n = len(v)
+    let m = mean(v)
+    let sd = std_dev_sample(v)
+    let min_val = min_of(v)
+    let q1_val = quartile_1(v)
+    let med_val = median(v)
+    let q3_val = quartile_3(v)
+    let max_val = max_of(v)
+
+    concat_strings(
+        concat_strings(
+            concat_strings("count: ", format_int(n)),
+            concat_strings("\nmean: ", format_float(m))
+        ),
+        concat_strings(
+            concat_strings("\nstd: ", format_float(sd)),
+            concat_strings(
+                concat_strings("\nmin: ", format_int(min_val)),
+                concat_strings(
+                    concat_strings("\nQ1: ", format_float(q1_val)),
+                    concat_strings(
+                        concat_strings("\nmedian: ", format_float(med_val)),
+                        concat_strings(
+                            concat_strings("\nQ3: ", format_float(q3_val)),
+                            concat_strings("\nmax: ", format_int(max_val))
+                        )
+                    )
+                )
+            )
+        )
+    )
+}

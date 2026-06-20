@@ -1,0 +1,347 @@
+//! VEXL Standard Library - String Operations
+//! Defines string manipulation functions built on intrinsics.
+
+// ═══════════════════════════════════════════════════════════
+// STRING CONVERSION
+// ═══════════════════════════════════════════════════════════
+
+/// Convert string to uppercase
+pure fn to_upper(s: String) -> String = {
+    __intrinsic_string_to_upper(s)
+}
+
+/// Convert string to lowercase
+pure fn to_lower(s: String) -> String = {
+    __intrinsic_string_to_lower(s)
+}
+
+/// Convert first character to uppercase, rest unchanged
+pure fn capitalize(s: String) -> String = {
+    if string_len(s) == 0 {
+        s
+    } else {
+        let first = substring(s, 0, 1)
+        let rest = substring(s, 1, string_len(s) - 1)
+        concat_strings(to_upper(first), rest)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRING INSPECTION
+// ═══════════════════════════════════════════════════════════
+
+/// Check if string is empty
+pure fn is_empty(s: String) -> Bool = {
+    string_len(s) == 0
+}
+
+/// Check if string starts with prefix
+pure fn starts_with(s: String, prefix: String) -> Bool = {
+    let s_len = string_len(s)
+    let p_len = string_len(prefix)
+    if p_len > s_len {
+        false
+    } else {
+        substring(s, 0, p_len) == prefix
+    }
+}
+
+/// Check if string ends with suffix
+pure fn ends_with(s: String, suffix: String) -> Bool = {
+    let s_len = string_len(s)
+    let suf_len = string_len(suffix)
+    if suf_len > s_len {
+        false
+    } else {
+        substring(s, s_len - suf_len, suf_len) == suffix
+    }
+}
+
+/// Check if string contains substring
+pure fn contains(s: String, substr: String) -> Bool = {
+    find_index(s, substr) >= 0
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRING EXTRACTION
+// ═══════════════════════════════════════════════════════════
+
+/// Extract substring from start with given length
+pure fn substring(s: String, start: Int, length: Int) -> String = {
+    __intrinsic_string_substring(s, start, length)
+}
+
+/// Get character at index (as single-character string)
+pure fn char_at(s: String, index: Int) -> String = {
+    substring(s, index, 1)
+}
+
+/// Trim whitespace from both ends
+pure fn trim(s: String) -> String = {
+    trim_start(trim_end(s))
+}
+
+/// Trim whitespace from start
+pure fn trim_start(s: String) -> String = {
+    let n = string_len(s)
+    let i = 0
+    while i < n {
+        let c = char_at(s, i)
+        if c != " " && c != "\n" && c != "\t" && c != "\r" {
+            substring(s, i, n - i)
+        } else {
+            i = i + 1
+        }
+    }
+    ""
+}
+
+/// Trim whitespace from end
+pure fn trim_end(s: String) -> String = {
+    let n = string_len(s)
+    let i = n - 1
+    while i >= 0 {
+        let c = char_at(s, i)
+        if c != " " && c != "\n" && c != "\t" && c != "\r" {
+            substring(s, 0, i + 1)
+        } else {
+            i = i - 1
+        }
+    }
+    ""
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRING SPLITTING & JOINING
+// ═══════════════════════════════════════════════════════════
+
+/// Split string by delimiter
+pure fn split(s: String, delimiter: String) -> Vector<String, 1> = {
+    __intrinsic_string_split(s, delimiter)
+}
+
+/// Split string by any whitespace
+pure fn split_whitespace(s: String) -> Vector<String, 1> = {
+    split(s, " ")
+}
+
+/// Split into lines
+pure fn lines(s: String) -> Vector<String, 1> = {
+    split(s, "\n")
+}
+
+/// Join vector of strings with separator
+pure fn join(v: Vector<String, 1>, separator: String) -> String = {
+    reduce((acc, s) => {
+        if string_len(acc) == 0 {
+            s
+        } else {
+            concat_strings(concat_strings(acc, separator), s)
+        }
+    }, "", v)
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRING SEARCH
+// ═══════════════════════════════════════════════════════════
+
+/// Find first index of substring (-1 if not found)
+pure fn find_index(s: String, substr: String) -> Int = {
+    __intrinsic_string_find(s, substr)
+}
+
+/// Find last index of substring (-1 if not found)
+pure fn find_last_index(s: String, substr: String) -> Int = {
+    let s_len = string_len(s)
+    let sub_len = string_len(substr)
+    let i = s_len - sub_len
+    while i >= 0 {
+        if substring(s, i, sub_len) == substr {
+            i
+        } else {
+            i = i - 1
+        }
+    }
+    -1
+}
+
+/// Count occurrences of substring
+pure fn count_occurrences(s: String, substr: String) -> Int = {
+    let sub_len = string_len(substr)
+    if sub_len == 0 {
+        0
+    } else {
+        let count = 0
+        let pos = 0
+        loop {
+            let found = find_at(s, substr, pos)
+            if found >= 0 {
+                count = count + 1
+                pos = found + sub_len
+            }
+        }
+        count
+    }
+}
+
+/// Find substring starting from position
+pure fn find_at(s: String, substr: String, pos: Int) -> Int = {
+    let s_len = string_len(s)
+    let sub_len = string_len(substr)
+    let i = pos
+    while i <= s_len - sub_len {
+        if substring(s, i, sub_len) == substr {
+            i
+        } else {
+            i = i + 1
+        }
+    }
+    -1
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRING REPLACEMENT
+// ═══════════════════════════════════════════════════════════
+
+/// Replace all occurrences of a pattern
+pure fn replace(s: String, from: String, to: String) -> String = {
+    __intrinsic_string_replace(s, from, to)
+}
+
+/// Replace first occurrence of a pattern
+pure fn replace_first(s: String, from: String, to: String) -> String = {
+    let idx = find_index(s, from)
+    if idx < 0 {
+        s
+    } else {
+        let prefix = substring(s, 0, idx)
+        let suffix = substring(s, idx + string_len(from), string_len(s) - idx - string_len(from))
+        concat_strings(concat_strings(prefix, to), suffix)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRING PADDING
+// ═══════════════════════════════════════════════════════════
+
+/// Pad string to the right with spaces
+pure fn pad_right(s: String, total_width: Int) -> String = {
+    let current = string_len(s)
+    if current >= total_width {
+        s
+    } else {
+        concat_strings(s, repeat_string(" ", total_width - current))
+    }
+}
+
+/// Pad string to the left with spaces
+pure fn pad_left(s: String, total_width: Int) -> String = {
+    let current = string_len(s)
+    if current >= total_width {
+        s
+    } else {
+        concat_strings(repeat_string(" ", total_width - current), s)
+    }
+}
+
+/// Pad string to center with spaces
+pure fn pad_center(s: String, total_width: Int) -> String = {
+    let current = string_len(s)
+    if current >= total_width {
+        s
+    } else {
+        let total_pad = total_width - current
+        let left_pad = total_pad / 2
+        let right_pad = total_pad - left_pad
+        concat_strings(repeat_string(" ", left_pad), concat_strings(s, repeat_string(" ", right_pad)))
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRING TRANSFORMATION
+// ═══════════════════════════════════════════════════════════
+
+/// Reverse a string
+pure fn reverse(s: String) -> String = {
+    let n = string_len(s)
+    let i = n - 1
+    let result = ""
+    while i >= 0 {
+        result = concat_strings(result, char_at(s, i))
+        i = i - 1
+    }
+    result
+}
+
+/// Repeat string n times
+pure fn repeat(s: String, n: Int) -> String = {
+    repeat_string(s, n)
+}
+
+/// Truncate string to max length
+pure fn truncate(s: String, max_len: Int) -> String = {
+    if string_len(s) <= max_len {
+        s
+    } else {
+        concat_strings(substring(s, 0, max_len - 3), "...")
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PARSING
+// ═══════════════════════════════════════════════════════════
+
+/// Parse integer from string
+pure fn parse_int(s: String) -> Int = {
+    __intrinsic_string_parse_int(s, 0)  // 0 as error sentinel
+}
+
+/// Parse float from string
+pure fn parse_float(s: String) -> Float = {
+    __intrinsic_string_parse_float(s, 0.0)  // 0.0 as error sentinel
+}
+
+// ═══════════════════════════════════════════════════════════
+// FORMATTING
+// ═══════════════════════════════════════════════════════════
+
+/// Format integer with commas
+pure fn format_int_commas(x: Int) -> String = {
+    if x < 0 {
+        concat_strings("-", format_int_commas(-x))
+    } else if x < 1000 {
+        format_int(x)
+    } else {
+        let thousands = x / 1000
+        let remainder = x % 1000
+        concat_strings(concat_strings(format_int_commas(thousands), ","), format_int_width(remainder, 3))
+    }
+}
+
+/// Format integer as binary string
+pure fn format_binary(x: Int) -> String = {
+    if x == 0 {
+        "0"
+    } else if x == 1 {
+        "1"
+    } else {
+        concat_strings(format_binary(x / 2), if x % 2 == 0 { "0" } else { "1" })
+    }
+}
+
+/// Format integer as hexadecimal string
+pure fn format_hex(x: Int) -> String = {
+    if x == 0 {
+        "0"
+    } else {
+        let hex_digits = "0123456789ABCDEF"
+        let result = ""
+        let n = x
+        while n > 0 {
+            let digit = n % 16
+            result = concat_strings(char_at(hex_digits, digit), result)
+            n = n / 16
+        }
+        result
+    }
+}

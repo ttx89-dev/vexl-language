@@ -1,0 +1,247 @@
+//! VEXL Standard Library - Linear Algebra
+//! Matrix and vector operations for numerical computing.
+
+// ═══════════════════════════════════════════════════════════
+// MATRIX CONSTRUCTION
+// ═══════════════════════════════════════════════════════════
+
+/// Create identity matrix
+pure fn eye(n: Int) -> Vector<Vector<Int, 1>, 1> = {
+    let i = 0
+    let result = []
+    while i < n {
+        let row = []
+        let j = 0
+        while j < n {
+            if i == j {
+                row = row ++ [1]
+            } else {
+                row = row ++ [0]
+            }
+            j = j + 1
+        }
+        result = result ++ [row]
+        i = i + 1
+    }
+    result
+}
+
+/// Create zero matrix
+pure fn zeros(rows: Int, cols: Int) -> Vector<Vector<Int, 1>, 1> = {
+    [repeat(0, cols) | _ <- [0..rows]]
+}
+
+/// Create ones matrix
+pure fn ones(rows: Int, cols: Int) -> Vector<Vector<Int, 1>, 1> = {
+    [repeat(1, cols) | _ <- [0..rows]]
+}
+
+/// Create diagonal matrix from vector
+pure fn diag(v: Vector<Int, 1>) -> Vector<Vector<Int, 1>, 1> = {
+    let n = len(v)
+    let i = 0
+    let result = []
+    while i < n {
+        let row = []
+        let j = 0
+        while j < n {
+            if i == j {
+                row = row ++ [v[i]]
+            } else {
+                row = row ++ [0]
+            }
+            j = j + 1
+        }
+        result = result ++ [row]
+        i = i + 1
+    }
+    result
+}
+
+// ═══════════════════════════════════════════════════════════
+// MATRIX PROPERTIES
+// ═══════════════════════════════════════════════════════════
+
+/// Get number of rows
+pure fn rows(m: Vector<Vector<T, 1>, 1>) -> Int = {
+    len(m)
+}
+
+/// Get number of columns
+pure fn cols(m: Vector<Vector<T, 1>, 1>) -> Int = {
+    if len(m) == 0 {
+        0
+    } else {
+        len(m[0])
+    }
+}
+
+/// Check if matrix is square
+pure fn is_square(m: Vector<Vector<T, 1>, 1>) -> Bool = {
+    rows(m) == cols(m)
+}
+
+// ═══════════════════════════════════════════════════════════
+// MATRIX OPERATIONS
+// ═══════════════════════════════════════════════════════════
+
+/// Transpose a matrix
+pure fn transpose(m: Vector<Vector<T, 1>, 1>) -> Vector<Vector<T, 1>, 1> = {
+    let r = rows(m)
+    let c = cols(m)
+    let i = 0
+    let result = []
+    while i < c {
+        let row = []
+        let j = 0
+        while j < r {
+            row = row ++ [m[j][i]]
+            j = j + 1
+        }
+        result = result ++ [row]
+        i = i + 1
+    }
+    result
+}
+
+/// Matrix multiplication (dimension-safe: m x n @ n x p = m x p)
+pure fn mat_mul(
+    a: Vector<Vector<Int, 1>, 1>,
+    b: Vector<Vector<Int, 1>, 1>
+) -> Vector<Vector<Int, 1>, 1> = {
+    let m = rows(a)
+    let n = cols(a)
+    let p = cols(b)
+    let i = 0
+    let result = []
+    while i < m {
+        let row = []
+        let j = 0
+        while j < p {
+            let sum = 0
+            let k = 0
+            while k < n {
+                sum = sum + a[i][k] * b[k][j]
+                k = k + 1
+            }
+            row = row ++ [sum]
+            j = j + 1
+        }
+        result = result ++ [row]
+        i = i + 1
+    }
+    result
+}
+
+/// Matrix-vector multiplication
+pure fn mat_vec_mul(
+    m: Vector<Vector<Int, 1>, 1>,
+    v: Vector<Int, 1>
+) -> Vector<Int, 1> = {
+    let r = rows(m)
+    let i = 0
+    let result = []
+    while i < r {
+        let row = m[i]
+        let dot = sum([row[j] * v[j] | j <- [0..cols(m)]])
+        result = result ++ [dot]
+        i = i + 1
+    }
+    result
+}
+
+/// Element-wise matrix addition
+pure fn mat_add(
+    a: Vector<Vector<Int, 1>, 1>,
+    b: Vector<Vector<Int, 1>, 1>
+) -> Vector<Vector<Int, 1>, 1> = {
+    [ [a[i][j] + b[i][j] | j <- [0..cols(a)]]
+    | i <- [0..rows(a)] ]
+}
+
+/// Element-wise matrix subtraction
+pure fn mat_sub(
+    a: Vector<Vector<Int, 1>, 1>,
+    b: Vector<Vector<Int, 1>, 1>
+) -> Vector<Vector<Int, 1>, 1> = {
+    [ [a[i][j] - b[i][j] | j <- [0..cols(a)]]
+    | i <- [0..rows(a)] ]
+}
+
+/// Scalar multiplication
+pure fn mat_scale(
+    m: Vector<Vector<Int, 1>, 1>,
+    s: Int
+) -> Vector<Vector<Int, 1>, 1> = {
+    [ [m[i][j] * s | j <- [0..cols(m)]]
+    | i <- [0..rows(m)] ]
+}
+
+// ═══════════════════════════════════════════════════════════
+// VECTOR OPERATIONS (additional)
+// ═══════════════════════════════════════════════════════════
+
+/// Dot product of two vectors
+pure fn dot(v1: Vector<Int, 1>, v2: Vector<Int, 1>) -> Int = {
+    sum([v1[i] * v2[i] | i <- [0..len(v1)]])
+}
+
+/// Cross product of two 3D vectors
+pure fn cross(v1: Vector<Int, 1>, v2: Vector<Int, 1>) -> Vector<Int, 1> = {
+    [v1[1] * v2[2] - v1[2] * v2[1],
+     v1[2] * v2[0] - v1[0] * v2[2],
+     v1[0] * v2[1] - v1[1] * v2[0]]
+}
+
+/// Euclidean norm of vector
+pure fn norm(v: Vector<Int, 1>) -> Float = {
+    sqrt(sum([x * x | x <- v]) as Float)
+}
+
+/// Normalize vector to unit length
+pure fn normalize(v: Vector<Int, 1>) -> Vector<Float, 1> = {
+    let n = norm(v)
+    if n == 0.0 {
+        [0.0 | _ <- v]
+    } else {
+        [(x as Float) / n | x <- v]
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// STRUCTURAL OPERATORS
+// ═══════════════════════════════════════════════════════════
+
+/// Repeat a value n times into a vector
+pure fn repeat<T>(val: T, n: Int) -> Vector<T, 1> = {
+    [val | _ <- [0..n]]
+}
+
+/// Create range [start, end) with step 1
+pure fn range(start: Int, end: Int) -> Vector<Int, 1> = {
+    [i | i <- [start..end]]
+}
+
+/// Create range with custom step
+pure fn range_step(start: Int, end: Int, step: Int) -> Vector<Int, 1> = {
+    if step > 0 {
+        let n = (end - start) / step
+        if (end - start) % step > 0 {
+            n = n + 1
+        }
+        [start + i * step | i <- [0..n]]
+    } else {
+        []
+    }
+}
+
+/// Flatten a matrix into a vector (row-major)
+pure fn flatten(m: Vector<Vector<T, 1>, 1>) -> Vector<T, 1> = {
+    reduce((acc, row) => acc ++ row, [], m)
+}
+
+/// Reshape a vector into a matrix
+pure fn reshape<T>(v: Vector<T, 1>, r: Int, c: Int) -> Vector<Vector<T, 1>, 1> = {
+    [ [v[i * c + j] | j <- [0..c]]
+    | i <- [0..r] ]
+}
