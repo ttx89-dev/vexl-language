@@ -8,8 +8,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use vexl_syntax::parser::parse;
-use vexl_syntax::ast::Type;
-use vexl_ir::lower::{lower_to_vir, lower_decls_to_vir};
+use vexl_ir::lower::{lower_to_vir, lower_decls_to_vir, type_check_module, infer_module_types};
 use vexl_ir::optimize::optimize;
 use vexl_codegen::{codegen_to_string, JitEngine};
 
@@ -185,13 +184,14 @@ fn compile_file(input: &PathBuf, output: Option<&PathBuf>, verbose: bool) -> Res
         eprintln!("🔍 Type checking...");
     }
     
-    // Type check - for now, skip type checking declarations
-    // TODO: Implement type checking for declarations
-    let inferred_type = Type::Int; // Placeholder
+    // Run full type inference before lowering
+    let inferred_results = infer_module_types(&ast)?;
     
     if verbose {
         eprintln!("✓ Type check passed");
-        eprintln!("  Inferred type: {:?}", inferred_type);
+        for (name, ty, effect) in &inferred_results {
+            eprintln!("  {} :: {:?} [effect: {:?}]", name, ty, effect);
+        }
         eprintln!("⚙️  Lowering to VIR...");
     }
     
@@ -303,9 +303,24 @@ fn check_file(input: &PathBuf) -> Result<(), String> {
 
     let ast = parse(&source).map_err(|e| format!("Parse error: {:?}", e))?;
 
-    // TODO: Implement type checking for declarations
-    println!("Parsed {} declarations successfully", ast.len());
+    println!("Parsed {} declarations. Running type inference...", ast.len());
 
+    let results = type_check_module(&ast)?;
+
+    for (name, result) in &results {
+        match result {
+            Ok(type_str) => println!("  {} :: {}", name, type_str),
+            Err(err) => println!("  {} type error: {}", name, err),
+        }
+    }
+
+    // Check if any declarations had type errors
+    let errors: Vec<_> = results.iter().filter(|(_, r)| r.is_err()).collect();
+    if !errors.is_empty() {
+        return Err(format!("{} type error(s) found", errors.len()));
+    }
+
+    println!("Type check passed for all declarations.");
     Ok(())
 }
 
@@ -420,9 +435,13 @@ fn eval_expression(expression: &str) -> Result<(), String> {
     // Parse the expression directly (no wrapping needed)
     let ast = parse(expression).map_err(|e| format!("Parse error: {:?}", e))?;
 
-    // TODO: Implement type checking for declarations
+    // Run type inference
+    let inferred_results = infer_module_types(&ast)?;
     println!("Expression: {}", expression);
     println!("Parsed {} declarations", ast.len());
+    for (name, ty, effect) in &inferred_results {
+        println!("  {} :: {:?} [effect: {:?}]", name, ty, effect);
+    }
 
     // Lower to VIR and optimize - handle declarations
     let mut vir_module = if ast.len() == 1 {

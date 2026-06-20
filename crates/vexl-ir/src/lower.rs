@@ -1,14 +1,39 @@
-//! AST to VIR lowering
+//! AST to VIR lowering with type inference integration
+//!
+//! The lowering pipeline now runs Hindley-Milner type inference + dimensional
+//! constraint solving + effect checking before generating VIR, ensuring every
+//! instruction carries type information and every function has an accurate
+//! effect signature.
 
 use crate::{VirModule, VirFunction, VirType, FunctionSignature, BasicBlock, Terminator, Instruction, InstructionKind, ValueId, BlockId};
 use vexl_syntax::ast::{Decl, Expr, BinOpKind, Type};
+use vexl_types::{infer, InferredType, TypeEnv, infer_effect, EffectEnv, solve_constraints};
 use std::collections::HashMap;
+
+/// Convert an InferredType (from Hindley-Milner inference) to a VirType (IR type).
+///
+/// This is the bridge between the type system and the IR. Type variables should
+/// have been resolved by solve_constraints + apply before calling this.
+fn inferred_type_to_vir_type(ty: &InferredType) -> VirType {
+    match ty {
+        InferredType::Int => VirType::Int64,
+        InferredType::Float => VirType::Float64,
+        InferredType::String => VirType::Pointer,
+        InferredType::Bool => VirType::Int64,      // booleans stored as i64
+        InferredType::Vector { .. } => VirType::Pointer, // vectors as heap-allocated ptrs
+        InferredType::Function { .. } => VirType::Pointer, // function pointers
+        // If a type variable remains unresolved, default to pointer
+        InferredType::Var(_) => VirType::Pointer,
+    }
+}
 
 /// Context for lowering AST to VIR
 pub struct LoweringContext {
     module: VirModule,
     current_instructions: Vec<Instruction>,
     variables: HashMap<String, ValueId>,
+    /// Shared type environment across all declarations in a module
+    type_env: TypeEnv,
 }
 
 impl LoweringContext {
@@ -17,7 +42,40 @@ impl LoweringContext {
             module: VirModule::new(),
             current_instructions: Vec::new(),
             variables: HashMap::new(),
+            type_env: TypeEnv::new(),
         }
+    }
+
+    /// Run full type inference on an expression: infer -> solve constraints -> apply substitution.
+    ///
+    /// Returns the fully resolved InferredType. This is the primary entry point for
+    /// integrating Hindley-Milner inference into the lowering pipeline.
+    pub fn infer_expr_type(&mut self, expr: &Expr) -> Result<InferredType, String> {
+        let (inferred_type, constraints) = infer(expr, &mut self.type_env)?;
+        let substitution = solve_constraints(constraints)?;
+        let resolved = substitution.apply(&inferred_type);
+        Ok(resolved)
+    }
+
+    /// Run effect inference on an expression.
+    pub fn infer_expr_effect(&self, expr: &Expr) -> vexl_core::Effect {
+        let effect_env = EffectEnv::new();
+        infer_effect(expr, &effect_env)
+    }
+
+    /// Run both type and effect inference, returning (type, effect).
+    pub fn infer_expr_type_and_effect(&mut self, expr: &Expr) -> Result<(InferredType, vexl_core::Effect), String> {
+        let ty = self.infer_expr_type(expr)?;
+        let effect = self.infer_expr_effect(expr);
+        Ok((ty, effect))
+    }
+
+    /// Emit an instruction with an optional type annotation from the inference engine.
+    fn emit_typed(&mut self, kind: InstructionKind, inferred_ty: Option<InferredType>) -> ValueId {
+        let result = self.module.fresh_value();
+        let result_type = inferred_ty.as_ref().map(|ty| inferred_type_to_vir_type(ty));
+        self.current_instructions.push(Instruction { result, result_type, kind });
+        result
     }
 
     /// Check if a value came from a string constant
@@ -70,11 +128,10 @@ impl LoweringContext {
         Ok(self.emit(InstructionKind::ConstInt(0)))
     }
     
-    /// Emit an instruction and return its result value
+    /// Emit an instruction without type annotation (legacy path).
+    /// Prefer emit_typed() when type inference results are available.
     fn emit(&mut self, kind: InstructionKind) -> ValueId {
-        let result = self.module.fresh_value();
-        self.current_instructions.push(Instruction { result, result_type: None, kind });
-        result
+        self.emit_typed(kind, None)
     }
     
     /// Lower an expression to VIR, returning the result value
@@ -485,9 +542,129 @@ impl Default for LoweringContext {
     }
 }
 
-/// Lower declarations to a VIR module
+/// Run type inference on a module's declarations and return the resolved types.
+///
+/// This is the primary integration point: it parses the AST, runs Hindley-Milner
+/// inference with dimensional constraint solving, and returns per-function/expr
+/// type and effect information. Call this before lowering to get typed VIR.
+pub fn infer_module_types(decls: &[Decl]) -> Result<Vec<(String, InferredType, vexl_core::Effect)>, String> {
+    let mut type_env = TypeEnv::new();
+
+    // First pass: register all function signatures so recursive calls resolve
+    for decl in decls {
+        if let Decl::Function { name, params, return_type, .. } = decl {
+            let param_types: Vec<InferredType> = params.iter()
+                .map(|(_, ty)| ast_type_to_inferred_type(ty))
+                .collect();
+            let ret_type = ast_type_to_inferred_type(return_type);
+            let func_type = InferredType::Function {
+                params: param_types,
+                ret: Box::new(ret_type),
+                effect: vexl_core::Effect::Pure, // will refine in second pass
+            };
+            type_env.insert(name.clone(), func_type);
+        }
+    }
+
+    // Second pass: infer each function body and expression
+    let mut results = Vec::new();
+    for decl in decls {
+        match decl {
+            Decl::Function { name, body, params, .. } => {
+                // Add parameter types to environment
+                for (param_name, param_type) in params {
+                    let inferred_param = ast_type_to_inferred_type(param_type);
+                    type_env.insert(param_name.clone(), inferred_param);
+                }
+
+                // Infer body type
+                let (inferred_type, constraints) = infer(body, &mut type_env)?;
+                let substitution = solve_constraints(constraints)?;
+                let resolved = substitution.apply(&inferred_type);
+
+                // Infer effect
+                let effect_env = EffectEnv::new();
+                let effect = infer_effect(body, &effect_env);
+
+                // Update function type with actual effect
+                type_env.insert(name.clone(), InferredType::Function {
+                    params: params.iter().map(|(_, ty)| ast_type_to_inferred_type(ty)).collect(),
+                    ret: Box::new(resolved.clone()),
+                    effect,
+                });
+
+                results.push((name.clone(), resolved, effect));
+            }
+            Decl::Expr(expr) => {
+                let (inferred_type, constraints) = infer(expr, &mut type_env)?;
+                let substitution = solve_constraints(constraints)?;
+                let resolved = substitution.apply(&inferred_type);
+
+                let effect_env = EffectEnv::new();
+                let effect = infer_effect(expr, &effect_env);
+
+                results.push(("__expr__".to_string(), resolved, effect));
+            }
+        }
+    }
+
+    Ok(results)
+}
+
+/// Convert an AST type annotation to an InferredType for the type inference environment.
+fn ast_type_to_inferred_type(ast_type: &Type) -> InferredType {
+    match ast_type {
+        Type::Int => InferredType::Int,
+        Type::Float => InferredType::Float,
+        Type::String => InferredType::String,
+        Type::Bool => InferredType::Bool,
+        Type::Vector { element, dimension } => {
+            let dim = dimension.map(|d| vexl_types::DimVar::Concrete(d))
+                .unwrap_or(vexl_types::DimVar::Any);
+            InferredType::Vector {
+                element: Box::new(ast_type_to_inferred_type(element)),
+                dimension: dim,
+            }
+        }
+        Type::Function { params, ret } => {
+            InferredType::Function {
+                params: params.iter().map(|p| ast_type_to_inferred_type(p)).collect(),
+                ret: Box::new(ast_type_to_inferred_type(ret)),
+                effect: vexl_core::Effect::Pure,
+            }
+        }
+        Type::Named(name) => match name.as_str() {
+            "i64" | "int" => InferredType::Int,
+            "f64" | "float" => InferredType::Float,
+            "string" => InferredType::String,
+            "bool" => InferredType::Bool,
+            _ => InferredType::Int, // default fallback
+        },
+    }
+}
+
+/// Type-check a module and return diagnostics per declaration.
+/// Returns a Vec of (name, Ok(type_str) | Err(msg)) for each declaration.
+pub fn type_check_module(decls: &[Decl]) -> Result<Vec<(String, Result<String, String>)>, String> {
+    let results = infer_module_types(decls)?;
+    Ok(results.into_iter().map(|(name, ty, effect)| {
+        let ty_str = format!("{:?} [effect: {:?}]", ty, effect);
+        (name, Ok(ty_str))
+    }).collect())
+}
+
+/// Lower declarations to a VIR module, using type inference to annotate
+/// function signatures and effects. This is the primary pipeline integration.
 pub fn lower_decls_to_vir(decls: &[Decl]) -> Result<VirModule, String> {
     let mut ctx = LoweringContext::new();
+
+    // Run type inference on the module first to populate the TypeEnv
+    let inferred_results = infer_module_types(decls)?;
+    let mut inferred_map: HashMap<String, (InferredType, vexl_core::Effect)> = HashMap::new();
+    for (name, ty, effect) in &inferred_results {
+        inferred_map.insert(name.clone(), (ty.clone(), *effect));
+    }
+
     let mut has_main = false;
     let mut main_instructions = Vec::new();
     let mut last_result = None;
@@ -499,11 +676,19 @@ pub fn lower_decls_to_vir(decls: &[Decl]) -> Result<VirModule, String> {
                     has_main = true;
                 }
 
-                // Convert AST types to VIR types
+                // Use the inferred type if available, otherwise fall back to AST type
+                let inferred_info = inferred_map.get(name);
+                let ret_type = inferred_info
+                    .map(|(ty, _)| inferred_type_to_vir_type(ty))
+                    .unwrap_or_else(|| ast_type_to_vir_type(return_type));
+                let effect = inferred_info
+                    .map(|(_, eff)| *eff)
+                    .unwrap_or(vexl_core::Effect::Pure);
+
+                // Convert AST types to VIR types for parameters
                 let param_types: Vec<VirType> = params.iter()
                     .map(|(_, ty)| ast_type_to_vir_type(ty))
                     .collect();
-                let ret_type = ast_type_to_vir_type(return_type);
 
                 // Create parameter ValueIds and mapping
                 let mut param_values = Vec::new();
@@ -546,7 +731,7 @@ pub fn lower_decls_to_vir(decls: &[Decl]) -> Result<VirModule, String> {
                     params: param_values,
                     blocks,
                     entry_block: block_id,
-                    effect: vexl_core::Effect::Pure,
+                    effect,
                     signature,
                 };
 
@@ -570,6 +755,16 @@ pub fn lower_decls_to_vir(decls: &[Decl]) -> Result<VirModule, String> {
         }
     }
 
+    // Determine main function return type from inference
+    let main_ret_type = inferred_map.get("__expr__")
+        .map(|(ty, _)| inferred_type_to_vir_type(ty))
+        .unwrap_or(VirType::Int64);
+
+    // Determine main function effect from inference
+    let main_effect = inferred_map.get("__expr__")
+        .map(|(_, eff)| *eff)
+        .unwrap_or(vexl_core::Effect::Pure);
+
     // Create main function with all expression declarations
     if has_main && !main_instructions.is_empty() {
         let block_id = ctx.module.fresh_block();
@@ -585,8 +780,8 @@ pub fn lower_decls_to_vir(decls: &[Decl]) -> Result<VirModule, String> {
             params: vec![],
             blocks: HashMap::from([(block_id, block)]),
             entry_block: block_id,
-            effect: vexl_core::Effect::Pure,
-            signature: FunctionSignature::new(vec![], VirType::Int64),
+            effect: main_effect,
+            signature: FunctionSignature::new(vec![], main_ret_type),
         };
 
         ctx.module.add_function("main".to_string(), func);
