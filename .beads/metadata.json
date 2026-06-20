@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "VEXL",
+  "project_id": "f9a71019-1cee-4bd8-8f88-7c32fc29623d"
+}
